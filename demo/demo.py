@@ -66,12 +66,12 @@ model.eval()
 
 # prepare input image
 transform = transforms.ToTensor()
-img_path = 'input.jpg'
+img_path = 'hand_full.png'
 original_img = cv2.imread(img_path)
 original_img_height, original_img_width = original_img.shape[:2]
 
 # prepare bbox
-bbox = [69, 137, 165, 153] # xmin, ymin, width, height
+bbox = [40, 656, 256, 332] # xmin, ymin, width, height
 bbox = process_bbox(bbox, (original_img_height, original_img_width, original_img_height))
 img, trans, inv_trans = generate_patch_image(original_img, bbox, False, 1.0, 0.0, cfg.input_img_shape)
 img = transform(img.astype(np.float32))/255
@@ -114,7 +114,7 @@ if hand_type[1] > 0.5:
 print('Right hand exist: ' + str(right_exist) + ' Left hand exist: ' + str(left_exist))
 
 # visualize joint coord in 2D space
-filename = 'result_2d.jpg'
+filename = 'result_2d_hand.jpg'
 vis_img = original_img.copy()[:,:,::-1].transpose(2,0,1)
 vis_img = vis_keypoints(vis_img, joint_coord, joint_valid, skeleton, filename, save_path='.')
 

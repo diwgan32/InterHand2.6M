@@ -62,7 +62,7 @@ class Dataset(torch.utils.data.Dataset):
             image_id = ann['image_id']
             img = db.loadImgs(image_id)[0]
             
-            img_path = osp.join(self.root_path, set, 'color', img['file_name'])
+            img_path = osp.join(self.root_path, set, 'rgb', img['file_name'])
             img_width, img_height = img['width'], img['height']
             cam_param = img['camera_param']
             focal, princpt = np.array(cam_param['focal'],dtype=np.float32), np.array(cam_param['princpt'],dtype=np.float32)
