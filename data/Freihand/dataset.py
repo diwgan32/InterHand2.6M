@@ -11,6 +11,12 @@ import torch.utils.data
 import cv2
 import os
 import os.path as osp
+import sys
+# TODO: Comment these out when not running as main
+sys.path.insert(0, osp.join('../../', 'main'))
+sys.path.insert(0, osp.join('../../', 'data'))
+sys.path.insert(0, osp.join('../../', 'common'))
+
 from config import cfg
 from utils.preprocessing import load_img, load_skeleton, process_bbox, get_aug_config, augmentation, transform_input_to_output_space, generate_patch_image, trans_point2d
 from utils.transforms import world2cam, cam2pixel, pixel2cam
@@ -32,7 +38,7 @@ class Dataset(torch.utils.data.Dataset):
         self.joint_type = {'right': np.arange(self.joint_num,self.joint_num*2), 'left': np.arange(0,self.joint_num)}
         self.root_joint_idx = {'right': 0, 'left': 21}
         self.skeleton = load_skeleton(osp.join(self.root_path, 'skeleton.txt'), self.joint_num*2)
-        
+        print("Skeleton loaded")
         self.datalist = []
         if self.mode == 'train':
             set = 'training'
@@ -58,7 +64,7 @@ class Dataset(torch.utils.data.Dataset):
             
             img_path = osp.join(self.root_path, set, 'color', img['file_name'])
             img_width, img_height = img['width'], img['height']
-            cam_param = img['cam_param']
+            cam_param = img['camera_param']
             focal, princpt = np.array(cam_param['focal'],dtype=np.float32), np.array(cam_param['princpt'],dtype=np.float32)
             
             joint_img = np.array(ann['joint_img'],dtype=np.float32)
@@ -94,7 +100,8 @@ class Dataset(torch.utils.data.Dataset):
         elif hand_type == 'left':
             return np.array([0,1], dtype=np.float32)
         else:
-            assert 0, print('Not supported hand type: ' + hand_type)
+            assert 0
+            print('Not supported hand type: ' + hand_type)
   
     def __len__(self):
         return len(self.datalist)
@@ -200,6 +207,8 @@ class Dataset(torch.utils.data.Dataset):
         print('MPJPE: %.2f' % (np.mean(mpjpe)))
 
 if __name__ == "__main__":
+    print("Importing..")
     import torchvision.transforms as transforms
+    print("Done")
     trainset_loader = Dataset(transforms.ToTensor(), "train")
 
