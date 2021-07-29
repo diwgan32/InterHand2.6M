@@ -25,8 +25,8 @@ import scipy.io as sio
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, transform, mode):
         self.mode = mode # train, test, val
-        self.img_path = '../data/InterHand2.6M/images'
-        self.annot_path = '../data/InterHand2.6M/annotations'
+        self.img_path = '/home/ubuntu/InterHand2.6M/data/InterHand2.6M/images'
+        self.annot_path = '/home/ubuntu/InterHand2.6M/data/InterHand2.6M/annotations'
         if self.mode == 'val':
             self.rootnet_output_path = '../data/InterHand2.6M/rootnet_output/rootnet_interhand2.6m_output_val.json'
         else:

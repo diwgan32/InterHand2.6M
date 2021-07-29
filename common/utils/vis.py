@@ -81,8 +81,9 @@ def vis_keypoints(img, kps, score, skeleton, filename, score_thr=0.4, line_width
         
         kps_i = (kps[i][0].astype(np.int32), kps[i][1].astype(np.int32))
         kps_pid = (kps[pid][0].astype(np.int32), kps[pid][1].astype(np.int32))
-
+        #print("Score", score[i], score[pid], pid)
         if score[i] > score_thr and score[pid] > score_thr and pid != -1:
+            #print("Drawing line", kps[i][0], kps[i][1], kps[pid][0], kps[pid][1])
             draw.line([(kps[i][0], kps[i][1]), (kps[pid][0], kps[pid][1])], fill=rgb_dict[parent_joint_name], width=line_width)
         if score[i] > score_thr:
             draw.ellipse((kps[i][0]-circle_rad, kps[i][1]-circle_rad, kps[i][0]+circle_rad, kps[i][1]+circle_rad), fill=rgb_dict[joint_name])

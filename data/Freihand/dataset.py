@@ -35,7 +35,7 @@ class Dataset(torch.utils.data.Dataset):
         self.original_img_shape = (224, 224) # height, width
         self.transform = transform
         self.joint_num = 21 # single hand
-        self.joint_type = {'right': np.arange(self.joint_num,self.joint_num*2), 'left': np.arange(0,self.joint_num)}
+        self.joint_type = {'right': np.arange(0,self.joint_num), 'left': np.arange(self.joint_num,self.joint_num*2)}
         self.root_joint_idx = {'right': 0, 'left': 21}
         self.skeleton = load_skeleton(osp.join(self.root_path, 'skeleton.txt'), self.joint_num*2)
         print("Skeleton loaded")
@@ -112,9 +112,11 @@ class Dataset(torch.utils.data.Dataset):
         joint_cam = joint['cam_coord'].copy(); joint_img = joint['img_coord'].copy(); joint_valid = joint['valid'].copy();
         hand_type = self.handtype_str2array(hand_type)
         joint_coord = np.concatenate((joint_img, joint_cam[:,2,None]),1)
-
         # image load
         img = load_img(img_path)
+        #filename = f"output_3d_{idx}.jpg"
+        #vis_3d_keypoints(joint_coord, joint_valid, self.skeleton[:self.joint_num], filename)
+
         # augmentation
         img, joint_coord, joint_valid, hand_type, inv_trans = augmentation(img, bbox, joint_coord, joint_valid, hand_type, self.mode, self.joint_type)
         img = self.transform(img.astype(np.float32))/255.
@@ -122,7 +124,8 @@ class Dataset(torch.utils.data.Dataset):
         root_valid = np.zeros((1),dtype=np.float32)
         # transform to output heatmap space
         joint_coord, joint_valid, rel_root_depth, root_valid = transform_input_to_output_space(joint_coord, joint_valid, rel_root_depth, root_valid, self.root_joint_idx, self.joint_type)
-
+        print('joint_coord', joint_coord)
+        input("? ")
         inputs = {'img': img}
         targets = {'joint_coord': joint_coord, 'rel_root_depth': rel_root_depth, 'hand_type': hand_type}
         meta_info = {'joint_valid': joint_valid, 'root_valid': root_valid, 'inv_trans': inv_trans, 'hand_type_valid': 1}
