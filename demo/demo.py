@@ -52,7 +52,9 @@ cudnn.benchmark = True
 joint_num = 21 # single hand
 root_joint_idx = {'right': 20, 'left': 41}
 joint_type = {'right': np.arange(0,joint_num), 'left': np.arange(joint_num,joint_num*2)}
-skeleton = load_skeleton(osp.join('../data/InterHand2.6M/annotations/skeleton.txt'), joint_num*2)
+# skeleton_loc = '../data/InterHand2.6M/annotations/skeleton.txt'
+skeleton_loc = '/home/ubuntu/FreiHAND_pub_v2/skeleton.txt' 
+skeleton = load_skeleton(osp.join(skeleton_loc), joint_num*2)
 
 # snapshot load
 model_path = './snapshot_%d.pth.tar' % int(args.test_epoch)
@@ -66,12 +68,18 @@ model.eval()
 
 # prepare input image
 transform = transforms.ToTensor()
-img_path = 'hand_full.png'
+img_path = 'freihand_sample_4.jpg'
 original_img = cv2.imread(img_path)
 original_img_height, original_img_width = original_img.shape[:2]
 
 # prepare bbox
-bbox = [40, 656, 256, 332] # xmin, ymin, width, height
+# xmin, ymin, width, height
+# bbox = [0, 607, 471, 444] # hand_full.png
+# bbox = [57, 60, 112, 100] # freihand_sample.jpg, freihand_sample_1.jpg
+# bbox = [208, 746, 137, 130] # handle_can.png
+# bbox = [48, 207, 310, 381] # hand_outreach.jpg
+bbox = [57, 57, 112, 112] # freihand_eval.jpg
+
 bbox = process_bbox(bbox, (original_img_height, original_img_width, original_img_height))
 img, trans, inv_trans = generate_patch_image(original_img, bbox, False, 1.0, 0.0, cfg.input_img_shape)
 img = transform(img.astype(np.float32))/255
@@ -114,7 +122,7 @@ if hand_type[1] > 0.5:
 print('Right hand exist: ' + str(right_exist) + ' Left hand exist: ' + str(left_exist))
 
 # visualize joint coord in 2D space
-filename = 'result_2d_hand.jpg'
+filename = 'result_' + img_path
 vis_img = original_img.copy()[:,:,::-1].transpose(2,0,1)
 vis_img = vis_keypoints(vis_img, joint_coord, joint_valid, skeleton, filename, save_path='.')
 

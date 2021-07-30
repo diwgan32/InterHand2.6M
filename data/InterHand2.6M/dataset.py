@@ -11,6 +11,11 @@ import torch.utils.data
 import cv2
 from glob import glob
 import os.path as osp
+import sys
+sys.path.insert(0, osp.join('../../', 'main'))
+sys.path.insert(0, osp.join('../../', 'data'))
+sys.path.insert(0, osp.join('../../', 'common'))
+
 from config import cfg
 from utils.preprocessing import load_img, load_skeleton, get_bbox, process_bbox, augmentation, transform_input_to_output_space, trans_point2d
 from utils.transforms import world2cam, cam2pixel, pixel2cam
@@ -59,12 +64,12 @@ class Dataset(torch.utils.data.Dataset):
                 rootnet_result[str(annot[i]['annot_id'])] = annot[i]
         else:
             print("Get bbox and root depth from groundtruth annotation")
-        
         for aid in db.anns.keys():
             ann = db.anns[aid]
             image_id = ann['image_id']
+            
             img = db.loadImgs(image_id)[0]
- 
+
             capture_id = img['capture']
             seq_name = img['seq_name']
             cam = img['camera']
@@ -92,7 +97,6 @@ class Dataset(torch.utils.data.Dataset):
                 bbox = np.array(ann['bbox'],dtype=np.float32) # x,y,w,h
                 bbox = process_bbox(bbox, (img_height, img_width))
                 abs_depth = {'right': joint_cam[self.root_joint_idx['right'],2], 'left': joint_cam[self.root_joint_idx['left'],2]}
-
             cam_param = {'focal': focal, 'princpt': princpt}
             joint = {'cam_coord': joint_cam, 'img_coord': joint_img, 'valid': joint_valid}
             data = {'img_path': img_path, 'seq_name': seq_name, 'cam_param': cam_param, 'bbox': bbox, 'joint': joint, 'hand_type': hand_type, 'hand_type_valid': hand_type_valid, 'abs_depth': abs_depth, 'file_name': img['file_name'], 'capture': capture_id, 'cam': cam, 'frame': frame_idx}
@@ -136,7 +140,6 @@ class Dataset(torch.utils.data.Dataset):
         # transform to output heatmap space
         joint_coord, joint_valid, rel_root_depth, root_valid = transform_input_to_output_space(joint_coord, joint_valid, rel_root_depth, root_valid, self.root_joint_idx, self.joint_type)
         img = self.transform(img.astype(np.float32))/255.
-        
         inputs = {'img': img}
         targets = {'joint_coord': joint_coord, 'rel_root_depth': rel_root_depth, 'hand_type': hand_type}
         meta_info = {'joint_valid': joint_valid, 'root_valid': root_valid, 'hand_type_valid': hand_type_valid, 'inv_trans': inv_trans, 'capture': int(data['capture']), 'cam': int(data['cam']), 'frame': int(data['frame'])}
@@ -272,4 +275,9 @@ class Dataset(torch.utils.data.Dataset):
         print('MPJPE for interacting hand sequences: %.2f' % (np.mean(mpjpe_ih)))
 
 
-
+if __name__ == "__main__":
+    print("Importing..")
+    import torchvision.transforms as transforms
+    print("Done")
+    trainset_loader = Dataset(transforms.ToTensor(), "train")
+    print(trainset_loader[0])

@@ -20,8 +20,8 @@ class Config:
     input_img_shape = (256, 256)
     output_hm_shape = (64, 64, 64) # (depth, height, width)
     sigma = 2.5
-    bbox_3d_size = 400 # depth axis
-    bbox_3d_size_root = 400 # depth axis
+    bbox_3d_size = 750 # depth axis (400 for Interhand, 1000 for Freihand)
+    bbox_3d_size_root = 750 # depth axis (400 for Interhand, 1000 for Freihand)
     output_root_hm_shape = 64 # depth axis
 
     ## model

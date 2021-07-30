@@ -88,7 +88,10 @@ class Dataset(torch.utils.data.Dataset):
                 bbox = np.array(ann['bbox'],dtype=np.float32) # x,y,w,h
                 bbox = process_bbox(bbox, (img_height, img_width))
                 abs_depth = joint_cam[self.root_joint_idx[hand_type],2] # single hand abs depth
+            #print(joint_cam)
+            #print(focal, princpt)
 
+            #input("? ")
             cam_param = {'focal': focal, 'princpt': princpt}
             joint = {'cam_coord': joint_cam, 'img_coord': joint_img, 'valid': joint_valid}
             data = {'img_path': img_path, 'bbox': bbox, 'cam_param': cam_param, 'joint': joint, 'hand_type': hand_type, 'abs_depth': abs_depth}
@@ -124,8 +127,8 @@ class Dataset(torch.utils.data.Dataset):
         root_valid = np.zeros((1),dtype=np.float32)
         # transform to output heatmap space
         joint_coord, joint_valid, rel_root_depth, root_valid = transform_input_to_output_space(joint_coord, joint_valid, rel_root_depth, root_valid, self.root_joint_idx, self.joint_type)
-        print('joint_coord', joint_coord)
-        input("? ")
+        #print('joint_coord', joint_coord)
+        #input("? ")
         inputs = {'img': img}
         targets = {'joint_coord': joint_coord, 'rel_root_depth': rel_root_depth, 'hand_type': hand_type}
         meta_info = {'joint_valid': joint_valid, 'root_valid': root_valid, 'inv_trans': inv_trans, 'hand_type_valid': 1}
@@ -214,4 +217,4 @@ if __name__ == "__main__":
     import torchvision.transforms as transforms
     print("Done")
     trainset_loader = Dataset(transforms.ToTensor(), "train")
-
+    print(trainset_loader[0])
