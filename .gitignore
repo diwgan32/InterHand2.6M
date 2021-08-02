@@ -5,3 +5,5 @@ output/
 *.png
 *.jpg
 data/InterHand2.6M/annotations/
+
+*.DS_Store
