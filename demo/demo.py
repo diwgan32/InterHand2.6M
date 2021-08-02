@@ -68,17 +68,18 @@ model.eval()
 
 # prepare input image
 transform = transforms.ToTensor()
-img_path = 'freihand_sample_4.jpg'
+img_path = 'input.jpg'
 original_img = cv2.imread(img_path)
 original_img_height, original_img_width = original_img.shape[:2]
 
 # prepare bbox
 # xmin, ymin, width, height
 # bbox = [0, 607, 471, 444] # hand_full.png
-# bbox = [57, 60, 112, 100] # freihand_sample.jpg, freihand_sample_1.jpg
+#bbox = [57, 60, 112, 100] # freihand_sample.jpg, freihand_sample_1.jpg
 # bbox = [208, 746, 137, 130] # handle_can.png
 # bbox = [48, 207, 310, 381] # hand_outreach.jpg
-bbox = [57, 57, 112, 112] # freihand_eval.jpg
+bbox = [69, 137, 165, 153] # input.jpg
+#bbox = [57, 57, 112, 112] # freihand_eval.jpg
 
 bbox = process_bbox(bbox, (original_img_height, original_img_width, original_img_height))
 img, trans, inv_trans = generate_patch_image(original_img, bbox, False, 1.0, 0.0, cfg.input_img_shape)

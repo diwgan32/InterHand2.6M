@@ -22,8 +22,11 @@ class Model(nn.Module):
         self.pose_net = pose_net
           
         # loss functions
+        print("Joint heatmap loss")
         self.joint_heatmap_loss = JointHeatmapLoss()
+        print("Rel root depth loss")
         self.rel_root_depth_loss = RelRootDepthLoss()
+        print("Handtype loss")
         self.hand_type_loss = HandTypeLoss()
      
     def render_gaussian_heatmap(self, joint_coord):
@@ -76,17 +79,23 @@ class Model(nn.Module):
             return out
 
 def init_weights(m):
+    print("Initting weights")
     if type(m) == nn.ConvTranspose2d:
+        print("ConvTranspose")
         nn.init.normal_(m.weight,std=0.001)
     elif type(m) == nn.Conv2d:
+        print("Conv2d")
         nn.init.normal_(m.weight,std=0.001)
         nn.init.constant_(m.bias, 0)
     elif type(m) == nn.BatchNorm2d:
+        print("BatchNorm")
         nn.init.constant_(m.weight,1)
         nn.init.constant_(m.bias,0)
     elif type(m) == nn.Linear:
+        print("Linear")
         nn.init.normal_(m.weight,std=0.01)
         nn.init.constant_(m.bias,0)
+    print(f"None: {type(m)}")
 
 def get_model(mode, joint_num):
     backbone_net = BackboneNet()
@@ -94,8 +103,10 @@ def get_model(mode, joint_num):
 
     if mode == 'train':
         backbone_net.init_weights()
+        print("Applied first set of weights")
         pose_net.apply(init_weights)
-
+        print("Done")
     model = Model(backbone_net, pose_net)
+    print("Initted model")
     return model
 

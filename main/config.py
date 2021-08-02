@@ -14,7 +14,7 @@ import numpy as np
 class Config:
     
     ## dataset
-    dataset = 'Freihand' # InterHand2.6M, RHD, STB
+    dataset = 'HanCo' # InterHand2.6M, RHD, STB
 
     ## input, output
     input_img_shape = (256, 256)

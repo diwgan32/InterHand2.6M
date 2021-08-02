@@ -95,6 +95,7 @@ class Trainer(Base):
             start_epoch, model, optimizer = self.load_model(model, optimizer)
         else:
             start_epoch = 0
+        print("Starting training...")
         model.train()
         
         self.start_epoch = start_epoch
