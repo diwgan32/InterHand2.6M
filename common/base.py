@@ -19,7 +19,6 @@ from config import cfg
 from dataset import Dataset
 from timer import Timer
 from logger import colorlogger
-from torch.nn.parallel.data_parallel import DataParallel
 from model import get_model
 
 class Base(object):
@@ -89,7 +88,7 @@ class Trainer(Base):
         # prepare network
         self.logger.info("Creating graph and optimizer...")
         model = get_model('train', self.joint_num)
-        model = DataParallel(model).cuda()
+        model = model.cuda()
         optimizer = self.get_optimizer(model)
         if cfg.continue_train:
             start_epoch, model, optimizer = self.load_model(model, optimizer)
@@ -148,7 +147,7 @@ class Tester(Base):
         # prepare network
         self.logger.info("Creating graph...")
         model = get_model('test', self.joint_num)
-        model = DataParallel(model).cuda()
+        model = model.cuda()
         ckpt = torch.load(model_path)
         model.load_state_dict(ckpt['network'])
         model.eval()
