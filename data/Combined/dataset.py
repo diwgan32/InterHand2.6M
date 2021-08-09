@@ -44,7 +44,7 @@ class Dataset(torch.utils.data.Dataset):
             set = 'training'
         else:
             set = 'evaluation'
-        self.annot_path = osp.join(self.root_path, 'combined_' + set + '.json')
+        self.annot_path = osp.join(self.root_path, 'combined_small_' + set + '.json')
         db = COCO(self.annot_path)
        
         if self.mode == 'test' and cfg.trans_test == 'rootnet':
