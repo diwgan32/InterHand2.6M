@@ -79,10 +79,11 @@ class Dataset(torch.utils.data.Dataset):
             if (joint_img.shape[0] == self.joint_num * 2):
                 joint_img_dh[self.joint_type[hand_type]] = joint_img[self.joint_type[hand_type]]
                 joint_cam_dh[self.joint_type[hand_type]] = joint_cam[self.joint_type[hand_type]]
+                joint_valid_dh[self.joint_type[hand_type]] = joint_valid[self.joint_type[hand_type]]
             else:
                 joint_img_dh[self.joint_type[hand_type]] = joint_img
                 joint_cam_dh[self.joint_type[hand_type]] = joint_cam
-            joint_valid_dh[self.joint_type[hand_type]] = joint_valid
+                joint_valid_dh[self.joint_type[hand_type]] = joint_valid
             joint_img = joint_img_dh; joint_cam = joint_cam_dh; joint_valid = joint_valid_dh;
 
             if self.mode == 'test' and cfg.trans_test == 'rootnet':
