@@ -32,10 +32,10 @@ class Config:
     end_epoch = 20 if dataset == 'InterHand2.6M' else 40
     lr = 1e-4
     lr_dec_factor = 10
-    train_batch_size = 16
+    train_batch_size = 1 
 
     ## testing config
-    test_batch_size = 32
+    test_batch_size = 1
     trans_test = 'rootnet' # gt, rootnet
 
     ## directory
@@ -49,7 +49,7 @@ class Config:
     result_dir = osp.join(output_dir, 'result')
 
     ## others
-    num_thread = 40
+    num_thread = 1
     gpu_ids = '0'
     num_gpus = 1
     continue_train = False
