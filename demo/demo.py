@@ -53,7 +53,7 @@ joint_num = 21 # single hand
 root_joint_idx = {'right': 20, 'left': 41}
 joint_type = {'right': np.arange(0,joint_num), 'left': np.arange(joint_num,joint_num*2)}
 # skeleton_loc = '../data/InterHand2.6M/annotations/skeleton.txt'
-skeleton_loc = '/home/ubuntu/FreiHAND_pub_v2/skeleton.txt' 
+skeleton_loc = '/home/ubuntu/Combined/skeleton.txt' 
 skeleton = load_skeleton(osp.join(skeleton_loc), joint_num*2)
 
 # snapshot load
@@ -68,16 +68,16 @@ model.eval()
 
 # prepare input image
 transform = transforms.ToTensor()
-img_path = 'freihand_sample_1.jpg'
+img_path = 'freihand_eval_2.jpg'
 original_img = cv2.imread(img_path)
 original_img_height, original_img_width = original_img.shape[:2]
 
 # prepare bbox
 # xmin, ymin, width, height
-# bbox = [0, 607, 471, 444] # hand_full.png
+#bbox = [0, 607, 471, 444] # hand_full.png
 #bbox = [57, 60, 112, 100] # freihand_sample.jpg, freihand_sample_1.jpg
-# bbox = [208, 746, 137, 130] # handle_can.png
-# bbox = [48, 207, 310, 381] # hand_outreach.jpg
+#bbox = [208, 746, 137, 130] # handle_can.png
+#bbox = [48, 207, 310, 381] # hand_outreach.jpg
 #bbox = [69, 137, 165, 153] # input.jpg
 bbox = [57, 57, 112, 112] # freihand_eval.jpg
 

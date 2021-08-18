@@ -14,28 +14,28 @@ import numpy as np
 class Config:
     
     ## dataset
-    dataset = 'HanCo' # InterHand2.6M, RHD, STB
+    dataset = 'Combined' # InterHand2.6M, RHD, STB
 
     ## input, output
     input_img_shape = (256, 256)
     output_hm_shape = (64, 64, 64) # (depth, height, width)
     sigma = 2.5
-    bbox_3d_size = 750 # depth axis (400 for Interhand, 1000 for Freihand)
-    bbox_3d_size_root = 750 # depth axis (400 for Interhand, 1000 for Freihand)
+    bbox_3d_size = 400 # depth axis (400 for Interhand, 1000 for Freihand)
+    bbox_3d_size_root = 400 # depth axis (400 for Interhand, 1000 for Freihand)
     output_root_hm_shape = 64 # depth axis
 
     ## model
     resnet_type = 50 # 18, 34, 50, 101, 152
 
     ## training config
-    lr_dec_epoch = [15, 17] if dataset == 'InterHand2.6M' else [35,37]
-    end_epoch = 20 if dataset == 'InterHand2.6M' else 40
+    lr_dec_epoch = [15, 17] if dataset == 'InterHand2.6M' else [45, 47]
+    end_epoch = 20 if dataset == 'InterHand2.6M' else 50
     lr = 1e-4
     lr_dec_factor = 10
-    train_batch_size = 1 
+    train_batch_size = 16 
 
     ## testing config
-    test_batch_size = 1
+    test_batch_size = 32
     trans_test = 'rootnet' # gt, rootnet
 
     ## directory
@@ -49,7 +49,7 @@ class Config:
     result_dir = osp.join(output_dir, 'result')
 
     ## others
-    num_thread = 1
+    num_thread = 16
     gpu_ids = '0'
     num_gpus = 1
     continue_train = False
