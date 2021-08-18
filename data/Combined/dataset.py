@@ -31,7 +31,7 @@ class Dataset(torch.utils.data.Dataset):
     def __init__(self, transform, mode):
         self.mode = mode
         self.root_path = '/home/ubuntu/Combined'
-        self.rootnet_output_path = '/home/ubuntu/Combined/rootnet_output/rootnet_rhd_output.json'
+        #self.rootnet_output_path = '/home/ubuntu/Combined/rootnet_output/rootnet_rhd_output.json'
         self.original_img_shape = (256, 256) # height, width
         self.transform = transform
         self.joint_num = 21 # single hand
@@ -46,16 +46,6 @@ class Dataset(torch.utils.data.Dataset):
             set = 'evaluation'
         self.annot_path = osp.join(self.root_path, 'combined_' + set + '.json')
         db = COCO(self.annot_path)
-       
-        if self.mode == 'test' and cfg.trans_test == 'rootnet':
-            print("Get bbox and root depth from " + self.rootnet_output_path)
-            rootnet_result = {}
-            with open(self.rootnet_output_path) as f:
-                annot = json.load(f)
-            for i in range(len(annot)):
-                rootnet_result[str(annot[i]['annot_id'])] = annot[i]
-        else:
-            print("Get bbox and root depth from groundtruth annotation")
 
         for aid in db.anns.keys():
             ann = db.anns[aid]
@@ -86,13 +76,10 @@ class Dataset(torch.utils.data.Dataset):
                 joint_valid_dh[self.joint_type[hand_type]] = joint_valid
             joint_img = joint_img_dh; joint_cam = joint_cam_dh; joint_valid = joint_valid_dh;
 
-            if self.mode == 'test' and cfg.trans_test == 'rootnet':
-                bbox = np.array(rootnet_result[str(aid)]['bbox'],dtype=np.float32)
-                abs_depth = rootnet_result[str(aid)]['abs_depth']
-            else:
-                bbox = np.array(ann['bbox'],dtype=np.float32) # x,y,w,h
-                bbox = process_bbox(bbox, (img_height, img_width))
-                abs_depth = joint_cam[self.root_joint_idx[hand_type],2] # single hand abs depth
+            
+            bbox = np.array(ann['bbox'],dtype=np.float32) # x,y,w,h
+            bbox = process_bbox(bbox, (img_height, img_width))
+            abs_depth = joint_cam[self.root_joint_idx[hand_type],2] # single hand abs depth
             #print(joint_cam)
             #print(focal, princpt)
 
