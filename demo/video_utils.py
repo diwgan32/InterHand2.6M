@@ -1,6 +1,6 @@
 import skvideo
 
-skvideo.setFFmpegPath("/usr/local/bin")
+skvideo.setFFmpegPath("/usr/bin")
 import skvideo.io
 
 

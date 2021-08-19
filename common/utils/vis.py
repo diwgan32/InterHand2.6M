@@ -94,7 +94,7 @@ def vis_keypoints(img, kps, score, skeleton, filename, score_thr=0.4, line_width
         _img.save(osp.join(cfg.vis_dir, filename))
     else:
         _img.save(osp.join(save_path, filename))
-
+    return _img
 
 def vis_3d_keypoints(kps_3d, score, skeleton, filename, score_thr=0.4, line_width=3, circle_rad=3):
 

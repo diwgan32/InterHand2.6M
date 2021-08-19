@@ -9,7 +9,7 @@ import os.path as osp
 import argparse
 import numpy as np
 import cv2
-import utils
+import video_utils
 import sys
 import torch
 import torchvision.transforms as transforms
@@ -26,13 +26,16 @@ from utils.vis import vis_keypoints, vis_3d_keypoints
 RIGHT_WRNCH_WRIST_ID = 10
 LEFT_WRNCH_WRIST_ID = 15
 NUM_WRNCH_HAND_JOINTS = 21
+NUM_INTERHAND_JOINTS = 21
 DISP = False
+JOINT_TYPE = {'right': np.arange(0,NUM_INTERHAND_JOINTS), 'left': np.arange(NUM_INTERHAND_JOINTS,NUM_INTERHAND_JOINTS*2)}
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', type=str, dest='gpu_ids')
     parser.add_argument('--wrnch_path', type=str, dest='wrnch_path')
     parser.add_argument('--video_path', type=str, dest='video_path')
+    parser.add_argument('--output_path', type=str, dest='output_path')
     parser.add_argument('--test_epoch', type=str, dest='test_epoch')
     args = parser.parse_args()
 
@@ -164,7 +167,7 @@ def load_model(args):
     model_path = './snapshot_%d.pth.tar' % int(args.test_epoch)
     assert osp.exists(model_path), 'Cannot find model at ' + model_path
     print('Load checkpoint from {}'.format(model_path))
-    model = get_model('test', joint_num)
+    model = get_model('test', 21)
     model = DataParallel(model).cuda()
     ckpt = torch.load(model_path)
     model.load_state_dict(ckpt['network'], strict=False)
@@ -177,15 +180,23 @@ if __name__ == "__main__":
     cap = cv2.VideoCapture(args.video_path)
     wrnch_data = read_wrnch(args.wrnch_path)
     frame_no = 0
-    is_portrait = utils.isVideoPortrait(args.video_path)
+    is_portrait = video_utils.isVideoPortrait(args.video_path)
+    skeleton_loc = '/home/ubuntu/Combined/skeleton.txt'
+    skeleton = load_skeleton(osp.join(skeleton_loc), NUM_INTERHAND_JOINTS*2)
+    writer = cv2.VideoWriter(
+        filename=args.output_path,
+        fps=30,
+        fourcc=cv2.VideoWriter_fourcc('m', 'p', '4', 'v'),
+        frameSize=(256, 256)
+    )
     while True:
         ret, frame = cap.read()
-        if not ret:
+        if not ret or frame_no > 30:
             break
 
-        if is_portrait:
-            frame = cv2.transpose(frame, frame)
-            frame = cv2.flip(frame, 1)
+        #if is_portrait:
+        #    frame = cv2.transpose(frame, frame)
+        #    frame = cv2.flip(frame, 1)
         cropped_img, x_offset, y_offset, scale = get_cropped_image(frame, wrnch_data, frame_no, "left")
 
         if (cropped_img is None):
@@ -228,7 +239,8 @@ if __name__ == "__main__":
             cv2.imshow("Test", cropped_img)
             cv2.waitKey(0)
 
-        model = get_model(args)
+        transform = transforms.ToTensor()
+        model = load_model(args)
         original_img = cropped_img
         original_img_height, original_img_width = original_img.shape[:2]
 
@@ -258,27 +270,30 @@ if __name__ == "__main__":
         rel_root_depth = (rel_root_depth/cfg.output_root_hm_shape * 2 - 1) * (cfg.bbox_3d_size_root/2)
 
         # right hand root depth == 0, left hand root depth == rel_root_depth
-        joint_coord[joint_type['left'],2] += rel_root_depth
+        joint_coord[JOINT_TYPE['left'],2] += rel_root_depth
 
         # handedness
-        joint_valid = np.zeros((joint_num*2), dtype=np.float32)
+        joint_valid = np.zeros((NUM_INTERHAND_JOINTS*2), dtype=np.float32)
         right_exist = False
         if hand_type[0] > 0.5: 
             right_exist = True
-            joint_valid[joint_type['right']] = 1
+            joint_valid[JOINT_TYPE['right']] = 1
         left_exist = False
         if hand_type[1] > 0.5:
             left_exist = True
-            joint_valid[joint_type['left']] = 1
+            joint_valid[JOINT_TYPE['left']] = 1
 
         print('Right hand exist: ' + str(right_exist) + ' Left hand exist: ' + str(left_exist))
-
+        filename = f"output_{frame_no}.jpg"
         # visualize joint coord in 2D space
-        filename = 'result_' + img_path
         vis_img = original_img.copy()[:,:,::-1].transpose(2,0,1)
-        vis_img = vis_keypoints(vis_img, joint_coord, joint_valid, skeleton, filename, save_path='.')
-        cv2.imsave(f"output_{frame_no}.jpg", vis_img)
+        vis_img = vis_keypoints(vis_img, joint_coord, joint_valid, skeleton, filename, save_path=None)
+        cv2_img = np.array(vis_img.convert("RGB"))
+        print(cv2_img.shape)
+        writer.write(cv2_img)
 
         frame_no += 1
+    cap.release()
+    writer.release()
     
 
