@@ -68,18 +68,36 @@ model.eval()
 
 # prepare input image
 transform = transforms.ToTensor()
-img_path = 'freihand_eval_2.jpg'
+img_path = '00000045.jpg'
 original_img = cv2.imread(img_path)
 original_img_height, original_img_width = original_img.shape[:2]
 
 # prepare bbox
 # xmin, ymin, width, height
-#bbox = [0, 607, 471, 444] # hand_full.png
+# bbox = [26, 31, 189, 216] # hand_full.jpg
 #bbox = [57, 60, 112, 100] # freihand_sample.jpg, freihand_sample_1.jpg
-#bbox = [208, 746, 137, 130] # handle_can.png
+# bbox = [1, 35, 137, 137] # handle_can_left.jpg
+#bbox = [118, 118, 137, 137] # handle_can_right.jpg
 #bbox = [48, 207, 310, 381] # hand_outreach.jpg
 #bbox = [69, 137, 165, 153] # input.jpg
-bbox = [57, 57, 112, 112] # freihand_eval.jpg
+#bbox = [72, 72, 125, 125] # freihand_eval.jpg
+#bbox = [66, 90, 125, 125] # freihand_eval_1.jpg
+# bbox = [64, 77, 120, 120] # freihand_eval_2.jpg
+#bbox = [49, 62, 120, 120] # freihand_eval_3.jpg
+#bbox = [69, 68, 124, 124] # freihand_eval_4.jpg
+# bbox = [116, 60, 96, 96] # dex_eval_1.jpg, dex_eval_2.jpg
+# bbox = [69, 101, 74, 74] # dex_eval_3.jpg
+#bbox = [84, 94, 59, 59] # dex_eval_4.jpg
+# bbox = [91, 62, 150, 150] # ho3d_eval_1.jpg
+# bbox = [95, 109, 66, 66] # ho3d_eval_2.jpg
+# bbox = [79, 92, 80, 80] # ho3d_eval_3.jpg
+# bbox = [90, 71, 118, 118] # ho3d_eval_4.jpg
+#bbox = [49, 64, 140, 140] # 00000006.jpg
+# bbox = [46, 36, 158, 158] # 00000057.jpg
+# bbox = [57, 79, 133, 133] # 00000027.jpg
+# bbox = [56, 74, 136, 136] # 00000033.jpg, 00000034.jpg
+# bbox = [70, 52, 70, 152] # 00000052.jpg
+bbox = [46, 53, 175, 175] # 00000045.jpg
 
 bbox = process_bbox(bbox, (original_img_height, original_img_width, original_img_height))
 img, trans, inv_trans = generate_patch_image(original_img, bbox, False, 1.0, 0.0, cfg.input_img_shape)

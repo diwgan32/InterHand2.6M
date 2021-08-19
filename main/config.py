@@ -35,7 +35,7 @@ class Config:
     train_batch_size = 16 
 
     ## testing config
-    test_batch_size = 32
+    test_batch_size = 4
     trans_test = 'rootnet' # gt, rootnet
 
     ## directory
@@ -49,7 +49,7 @@ class Config:
     result_dir = osp.join(output_dir, 'result')
 
     ## others
-    num_thread = 16
+    num_thread = 2
     gpu_ids = '0'
     num_gpus = 1
     continue_train = False
