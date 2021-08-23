@@ -146,15 +146,15 @@ def crop_and_center(imgInOrg, center, box_size):
 def get_cropped_image(img, wrnch_data, frame_no, side="left"):
     hand_bbox = get_hand_bbox(wrnch_data, frame_no, side)
     if (hand_bbox is None):
-        return None
+        return None, None, None, None
     wrist = get_wrist_pos(wrnch_data, frame_no)
     if (wrist is None):
-        return None
+        return None, None, None, None
     wrist[0] *= img.shape[1]
     wrist[1] *= img.shape[0]
     # Pick largest dim to place square box, and provide some buffer
     box_size = max(hand_bbox["height"], hand_bbox["width"])
-    box_size = None
+    box_size = None, None, None, None
     if (hand_bbox["height"] > hand_bbox["width"]):
         box_size = hand_bbox["height"] * img.shape[0] + 10
     else:
@@ -189,16 +189,19 @@ if __name__ == "__main__":
         fourcc=cv2.VideoWriter_fourcc('m', 'p', '4', 'v'),
         frameSize=(256, 256)
     )
+    transform = transforms.ToTensor()
+    model = load_model(args)
     while True:
         ret, frame = cap.read()
-        if not ret or frame_no > 30:
+        if not ret:
             break
 
         #if is_portrait:
         #    frame = cv2.transpose(frame, frame)
         #    frame = cv2.flip(frame, 1)
         cropped_img, x_offset, y_offset, scale = get_cropped_image(frame, wrnch_data, frame_no, "left")
-
+        if (frame_no % 10 == 0):
+            print(f"Frame no: {frame_no}")
         if (cropped_img is None):
             frame_no += 1
             continue
@@ -239,8 +242,6 @@ if __name__ == "__main__":
             cv2.imshow("Test", cropped_img)
             cv2.waitKey(0)
 
-        transform = transforms.ToTensor()
-        model = load_model(args)
         original_img = cropped_img
         original_img_height, original_img_width = original_img.shape[:2]
 
@@ -283,14 +284,12 @@ if __name__ == "__main__":
             left_exist = True
             joint_valid[JOINT_TYPE['left']] = 1
 
-        print('Right hand exist: ' + str(right_exist) + ' Left hand exist: ' + str(left_exist))
         filename = f"output_{frame_no}.jpg"
         # visualize joint coord in 2D space
         vis_img = original_img.copy()[:,:,::-1].transpose(2,0,1)
         vis_img = vis_keypoints(vis_img, joint_coord, joint_valid, skeleton, filename, save_path=None)
         cv2_img = np.array(vis_img.convert("RGB"))
-        print(cv2_img.shape)
-        writer.write(cv2_img)
+        writer.write(cv2_img[:, :, ::-1])
 
         frame_no += 1
     cap.release()
