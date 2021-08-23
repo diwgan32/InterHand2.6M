@@ -14,7 +14,7 @@ import numpy as np
 class Config:
     
     ## dataset
-    dataset = 'Combined' # InterHand2.6M, RHD, STB
+    dataset = 'HanCoMerged' # InterHand2.6M, RHD, STB
 
     ## input, output
     input_img_shape = (256, 256)
@@ -43,7 +43,7 @@ class Config:
     root_dir = osp.join(cur_dir, '..')
     data_dir = osp.join(root_dir, 'data')
     output_dir = osp.join(root_dir, 'output')
-    model_dir = osp.join(output_dir, 'model_dump')
+    model_dir = osp.join(output_dir, f'model_dump_{dataset}')
     vis_dir = osp.join(output_dir, 'vis')
     log_dir = osp.join(output_dir, 'log')
     result_dir = osp.join(output_dir, 'result')
