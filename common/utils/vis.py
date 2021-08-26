@@ -69,11 +69,13 @@ def get_keypoint_rgb(skeleton):
         
     return rgb_dict
 
-def vis_keypoints(img, kps, score, skeleton, filename, score_thr=0.4, line_width=3, circle_rad = 3, save_path=None):
+def vis_keypoints(img, kps, score, skeleton, filename, score_thr=0.4, line_width=3, circle_rad = 3, save_path=None, bbox=None):
     
     rgb_dict = get_keypoint_rgb(skeleton)
     _img = Image.fromarray(img.transpose(1,2,0).astype('uint8')) 
     draw = ImageDraw.Draw(_img)
+    if (not bbox is None):
+        draw.rectangle([bbox[0], bbox[1], bbox[0] + bbox[2], bbox[1] + bbox[3]], outline=(255, 0, 0), fill=None, 3)
     for i in range(len(skeleton)):
         joint_name = skeleton[i]['name']
         pid = skeleton[i]['parent_id']

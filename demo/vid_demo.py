@@ -247,6 +247,7 @@ if __name__ == "__main__":
         original_img_height, original_img_width = original_img.shape[:2]
 
         bbox = process_bbox(bbox, (original_img_height, original_img_width, original_img_height))
+        
         img, trans, inv_trans = generate_patch_image(original_img, bbox, False, 1.0, 0.0, cfg.input_img_shape)
         img = transform(img.astype(np.float32))/255
         img = img.cuda()[None,:,:,:]
@@ -288,7 +289,7 @@ if __name__ == "__main__":
         filename = f"output_{frame_no}.jpg"
         # visualize joint coord in 2D space
         vis_img = original_img.copy()[:,:,::-1].transpose(2,0,1)
-        vis_img = vis_keypoints(vis_img, joint_coord, joint_valid, skeleton, filename, save_path=None)
+        vis_img = vis_keypoints(vis_img, joint_coord, joint_valid, skeleton, filename, save_path=None, bbox=bbox)
         cv2_img = np.array(vis_img.convert("RGB"))
         writer.write(cv2_img[:, :, ::-1])
 
