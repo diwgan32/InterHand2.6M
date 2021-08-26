@@ -217,13 +217,15 @@ if __name__ == "__main__":
         hand_bbox["minX"] *= frame.shape[1]
         hand_bbox["minY"] *= frame.shape[0]
 
-        hand_bbox["minX"] -= x_offset
-        hand_bbox["minY"] -= y_offset
-
         hand_bbox["height"] *= scale
         hand_bbox["width"] *= scale
         hand_bbox["minX"] *= scale
         hand_bbox["minY"] *= scale
+        
+        hand_bbox["minX"] -= x_offset
+        hand_bbox["minY"] -= y_offset
+
+        
 
         bbox = [
             int(hand_bbox["minX"]),
