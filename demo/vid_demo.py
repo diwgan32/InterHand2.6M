@@ -29,7 +29,7 @@ NUM_WRNCH_HAND_JOINTS = 21
 NUM_INTERHAND_JOINTS = 21
 DISP = False
 JOINT_TYPE = {'right': np.arange(0,NUM_INTERHAND_JOINTS), 'left': np.arange(NUM_INTERHAND_JOINTS,NUM_INTERHAND_JOINTS*2)}
-
+SIDE = "right"
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', type=str, dest='gpu_ids')
@@ -147,7 +147,8 @@ def get_cropped_image(img, wrnch_data, frame_no, side="left"):
     hand_bbox = get_hand_bbox(wrnch_data, frame_no, side)
     if (hand_bbox is None):
         return None, None, None, None
-    wrist = get_wrist_pos(wrnch_data, frame_no)
+
+    wrist = get_wrist_pos(wrnch_data, frame_no, "L" if side == "left" else "R")
     if (wrist is None):
         return None, None, None, None
     wrist[0] *= img.shape[1]
@@ -199,14 +200,14 @@ if __name__ == "__main__":
         #if is_portrait:
         #    frame = cv2.transpose(frame, frame)
         #    frame = cv2.flip(frame, 1)
-        cropped_img, x_offset, y_offset, scale = get_cropped_image(frame, wrnch_data, frame_no, "left")
+        cropped_img, x_offset, y_offset, scale = get_cropped_image(frame, wrnch_data, frame_no, SIDE)
         if (frame_no % 10 == 0):
             print(f"Frame no: {frame_no}")
         if (cropped_img is None):
             frame_no += 1
             continue
 
-        hand_bbox = get_small_hand_bbox(wrnch_data, frame_no, "left")
+        hand_bbox = get_small_hand_bbox(wrnch_data, frame_no, SIDE)
         if (hand_bbox is None):
             frame_no += 1
             continue
@@ -271,7 +272,7 @@ if __name__ == "__main__":
         rel_root_depth = (rel_root_depth/cfg.output_root_hm_shape * 2 - 1) * (cfg.bbox_3d_size_root/2)
 
         # right hand root depth == 0, left hand root depth == rel_root_depth
-        joint_coord[JOINT_TYPE['left'],2] += rel_root_depth
+        joint_coord[JOINT_TYPE[SIDE],2] += rel_root_depth
 
         # handedness
         joint_valid = np.zeros((NUM_INTERHAND_JOINTS*2), dtype=np.float32)
