@@ -75,7 +75,7 @@ def vis_keypoints(img, kps, score, skeleton, filename, score_thr=0.4, line_width
     _img = Image.fromarray(img.transpose(1,2,0).astype('uint8')) 
     draw = ImageDraw.Draw(_img)
     if (not bbox is None):
-        draw.rectangle([bbox[0], bbox[1], bbox[0] + bbox[2], bbox[1] + bbox[3]], outline=(255, 0, 0), fill=None, 3)
+        draw.rectangle([bbox[0], bbox[1], bbox[0] + bbox[2], bbox[1] + bbox[3]], outline=(255, 0, 0), fill=None, width=3)
     for i in range(len(skeleton)):
         joint_name = skeleton[i]['name']
         pid = skeleton[i]['parent_id']
