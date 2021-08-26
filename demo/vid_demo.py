@@ -30,6 +30,7 @@ NUM_INTERHAND_JOINTS = 21
 DISP = False
 JOINT_TYPE = {'right': np.arange(0,NUM_INTERHAND_JOINTS), 'left': np.arange(NUM_INTERHAND_JOINTS,NUM_INTERHAND_JOINTS*2)}
 SIDE = "right"
+# HanCo validated training dataset, with greenscreens swapped out
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', type=str, dest='gpu_ids')
