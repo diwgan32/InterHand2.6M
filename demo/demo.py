@@ -68,7 +68,7 @@ model.eval()
 
 # prepare input image
 transform = transforms.ToTensor()
-img_path = '00000045.jpg'
+img_path = 'outreach_1.jpg'
 original_img = cv2.imread(img_path)
 original_img_height, original_img_width = original_img.shape[:2]
 
@@ -97,7 +97,9 @@ original_img_height, original_img_width = original_img.shape[:2]
 # bbox = [57, 79, 133, 133] # 00000027.jpg
 # bbox = [56, 74, 136, 136] # 00000033.jpg, 00000034.jpg
 # bbox = [70, 52, 70, 152] # 00000052.jpg
-bbox = [46, 53, 175, 175] # 00000045.jpg
+#bbox = [46, 53, 175, 175] # 00000045.jpg
+bbox = [44, 41, 178, 178] # outreach_1.jpg
+#bbox = [30, 43, 195, 195]  #outreach_2.jpg
 
 bbox = process_bbox(bbox, (original_img_height, original_img_width, original_img_height))
 img, trans, inv_trans = generate_patch_image(original_img, bbox, False, 1.0, 0.0, cfg.input_img_shape)

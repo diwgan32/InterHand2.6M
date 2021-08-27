@@ -29,7 +29,7 @@ NUM_WRNCH_HAND_JOINTS = 21
 NUM_INTERHAND_JOINTS = 21
 DISP = False
 JOINT_TYPE = {'right': np.arange(0,NUM_INTERHAND_JOINTS), 'left': np.arange(NUM_INTERHAND_JOINTS,NUM_INTERHAND_JOINTS*2)}
-SIDE = "right"
+SIDE = "left"
 # HanCo validated training dataset, with greenscreens swapped out
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -73,11 +73,31 @@ def get_hand_pose(wrnch_data, frame_no, side="left"):
         return None
     return hand_pose
 
+#def get_hand_bbox(wrnch_data, frame_no, side="left"):
+#    hand_pose = get_hand_pose(wrnch_data, frame_no, side)
+#    if (hand_pose is None):
+#        return None
+#    return hand_pose[side]["bbox"]
+
 def get_hand_bbox(wrnch_data, frame_no, side="left"):
     hand_pose = get_hand_pose(wrnch_data, frame_no, side)
     if (hand_pose is None):
         return None
-    return hand_pose[side]["bbox"]
+    joints = np.array(hand_pose[side]["joints"])
+    x_vals = joints[::2]
+    y_vals = joints[1::2]
+
+    x_min = np.min(x_vals[x_vals > 0])
+    y_min = np.min(y_vals[y_vals > 0])
+    x_max = np.max(x_vals[x_vals > 0])
+    y_max = np.max(y_vals[y_vals > 0])
+
+    return {
+        "minX": max(x_min - .15, 0),
+        "minY": max(y_min - .15, 0),
+        "height": min(y_max - y_min + .3, 1.0),
+        "width": min(x_max - x_min  + .3, 1.0)
+    }
 
 def get_small_hand_bbox(wrnch_data, frame_no, side="left"):
     hand_pose = get_hand_pose(wrnch_data, frame_no, side)
@@ -142,7 +162,7 @@ def crop_and_center(imgInOrg, center, box_size):
         imgInOrg[y_min_o:y_max_o, x_min_o:x_max_o]
     new_img = cv2.resize(new_img, (256, 256))
     scale = float(256)/box_size
-    return new_img, x_min_o, y_min_o, scale
+    return new_img, x_min_v*scale, y_min_v*scale, scale
 
 def get_cropped_image(img, wrnch_data, frame_no, side="left"):
     hand_bbox = get_hand_bbox(wrnch_data, frame_no, side)
@@ -158,9 +178,9 @@ def get_cropped_image(img, wrnch_data, frame_no, side="left"):
     box_size = max(hand_bbox["height"], hand_bbox["width"])
     box_size = None, None, None, None
     if (hand_bbox["height"] > hand_bbox["width"]):
-        box_size = hand_bbox["height"] * img.shape[0] + 10
+       box_size = hand_bbox["height"] * img.shape[0] + 5
     else:
-        box_size = hand_bbox["width"] * img.shape[1] + 10
+        box_size = hand_bbox["width"] * img.shape[1] + 5
     cropped_img, x_offset, y_offset, scale = crop_and_center(img, wrist, int(box_size))
     return cropped_img, x_offset, y_offset, scale
 
@@ -224,8 +244,8 @@ if __name__ == "__main__":
         
         hand_bbox["minX"] -= x_offset
         hand_bbox["minY"] -= y_offset
-
-        
+        #print(hand_bbox, scale)
+        #input("? ")
 
         bbox = [
             int(hand_bbox["minX"]),
