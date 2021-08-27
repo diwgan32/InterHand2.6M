@@ -30,6 +30,9 @@ NUM_INTERHAND_JOINTS = 21
 DISP = False
 JOINT_TYPE = {'right': np.arange(0,NUM_INTERHAND_JOINTS), 'left': np.arange(NUM_INTERHAND_JOINTS,NUM_INTERHAND_JOINTS*2)}
 SIDE = "left"
+FOCAL = (214.7, 214.1)
+PRINCPT = (998.5, 132.01)
+
 # HanCo validated training dataset, with greenscreens swapped out
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -38,6 +41,7 @@ def parse_args():
     parser.add_argument('--video_path', type=str, dest='video_path')
     parser.add_argument('--output_path', type=str, dest='output_path')
     parser.add_argument('--test_epoch', type=str, dest='test_epoch')
+    parser.add_argument('--save_joints', type=bool, dest='save_joints')
     args = parser.parse_args()
 
     # test gpus
@@ -213,6 +217,8 @@ if __name__ == "__main__":
     )
     transform = transforms.ToTensor()
     model = load_model(args)
+    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    hand_joints = np.array((frame_count, 42, 3))
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -292,11 +298,13 @@ if __name__ == "__main__":
         joint_coord[:,:2] = np.dot(inv_trans, np.concatenate((joint_coord[:,:2], np.ones_like(joint_coord[:,:1])),1).transpose(1,0)).transpose(1,0)
         joint_coord[:,2] = (joint_coord[:,2]/cfg.output_hm_shape[0] * 2 - 1) * (cfg.bbox_3d_size/2)
 
+        hand_joints = joint_coord
+
         # restore right hand-relative left hand depth to continuous depth space
-        rel_root_depth = (rel_root_depth/cfg.output_root_hm_shape * 2 - 1) * (cfg.bbox_3d_size_root/2)
+        #rel_root_depth = (rel_root_depth/cfg.output_root_hm_shape * 2 - 1) * (cfg.bbox_3d_size_root/2)
 
         # right hand root depth == 0, left hand root depth == rel_root_depth
-        joint_coord[JOINT_TYPE[SIDE],2] += rel_root_depth
+        #joint_coord[JOINT_TYPE[SIDE],2] += rel_root_depth
 
         # handedness
         joint_valid = np.zeros((NUM_INTERHAND_JOINTS*2), dtype=np.float32)
@@ -317,6 +325,8 @@ if __name__ == "__main__":
         writer.write(cv2_img[:, :, ::-1])
 
         frame_no += 1
+    if (args.save_joints):
+        np.save(args.output_path.split(".")[0] + ".npy", hand_joints)
     cap.release()
     writer.release()
     
