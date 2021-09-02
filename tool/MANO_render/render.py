@@ -59,11 +59,20 @@ for img_path in img_path_list:
         # get mesh coordinate
         try:
             mano_param = mano_params[capture_idx][frame_idx][hand_type]
+            
             if mano_param is None:
                 continue
         except KeyError:
             continue
-        
+
+        joint_param = joints[capture_idx][frame_idx]
+        campos, camrot = np.array(cameras[str(capture_idx)]['campos'][str(cam_idx)], dtype=np.float32), np.array(cameras[str(capture_idx)]['camrot'][str(cam_idx)], dtype=np.float32)
+        focal, princpt = np.array(cameras[str(capture_idx)]['focal'][str(cam_idx)], dtype=np.float32), np.array(cameras[str(capture_idx)]['princpt'][str(cam_idx)], dtype=np.float32)
+
+        joint_world = np.array(joints[str(capture_idx)][str(frame_idx)]['world_coord'], dtype=np.float32)
+        joint_cam = world2cam(joint_world.transpose(1,0), camrot, campos.reshape(3,1)).transpose(1,0)
+        joint_img = cam2pixel(joint_cam, focal, princpt)[:,:2]
+
         # get MANO 3D mesh coordinates (world coordinate)
         mano_pose = torch.FloatTensor(mano_param['pose']).view(-1,3)
         root_pose = mano_pose[0].view(1,3)
