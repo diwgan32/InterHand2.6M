@@ -11,6 +11,9 @@ import pyrender
 import trimesh
 import smplx
 import torch
+import sys
+sys.path.insert(0, osp.join('../../', 'common'))
+from utils.transforms import world2cam, cam2pixel, pixel2cam
 
 def save_obj(v, f, file_name='output.obj'):
     obj_file = open(file_name, 'w')
@@ -66,13 +69,13 @@ for img_path in img_path_list:
             continue
 
         joint_param = joints[capture_idx][frame_idx]
-        campos, camrot = np.array(cameras[str(capture_idx)]['campos'][str(cam_idx)], dtype=np.float32), np.array(cameras[str(capture_idx)]['camrot'][str(cam_idx)], dtype=np.float32)
-        focal, princpt = np.array(cameras[str(capture_idx)]['focal'][str(cam_idx)], dtype=np.float32), np.array(cameras[str(capture_idx)]['princpt'][str(cam_idx)], dtype=np.float32)
+        campos, camrot = np.array(cam_params[str(capture_idx)]['campos'][str(cam_idx)], dtype=np.float32), np.array(cam_params[str(capture_idx)]['camrot'][str(cam_idx)], dtype=np.float32)
+        focal, princpt = np.array(cam_params[str(capture_idx)]['focal'][str(cam_idx)], dtype=np.float32), np.array(cam_params[str(capture_idx)]['princpt'][str(cam_idx)], dtype=np.float32)
 
         joint_world = np.array(joints[str(capture_idx)][str(frame_idx)]['world_coord'], dtype=np.float32)
         joint_cam = world2cam(joint_world.transpose(1,0), camrot, campos.reshape(3,1)).transpose(1,0)
         joint_img = cam2pixel(joint_cam, focal, princpt)[:,:2]
-
+        print(joint_img)
         # get MANO 3D mesh coordinates (world coordinate)
         mano_pose = torch.FloatTensor(mano_param['pose']).view(-1,3)
         root_pose = mano_pose[0].view(1,3)
