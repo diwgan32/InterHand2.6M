@@ -14,6 +14,8 @@ import torch
 import sys
 sys.path.insert(0, osp.join('../../', 'common'))
 from utils.transforms import world2cam, cam2pixel, pixel2cam
+from utils.preprocessing import load_skeleton
+
 
 def save_obj(v, f, file_name='output.obj'):
     obj_file = open(file_name, 'w')
@@ -22,7 +24,20 @@ def save_obj(v, f, file_name='output.obj'):
     for i in range(len(f)):
         obj_file.write('f ' + str(f[i][0]+1) + '/' + str(f[i][0]+1) + ' ' + str(f[i][1]+1) + '/' + str(f[i][1]+1) + ' ' + str(f[i][2]+1) + '/' + str(f[i][2]+1) + '\n')
     obj_file.close()
-    
+
+def vis_keypoints(img, kps, skeleton):
+    for i in range(21):
+        joint_name = skeleton[i]['name']
+        pid = skeleton[i]['parent_id']
+        parent_joint_name = skeleton[pid]['name']
+        
+        kps_i = (kps[i][0].astype(np.int32), kps[i][1].astype(np.int32))
+        kps_pid = (kps[pid][0].astype(np.int32), kps[pid][1].astype(np.int32))
+        #print("Score", score[i], score[pid], pid)
+        img = cv2.line(img, (int(kps[i][0]), int(kps[i][1])), (int(kps[pid][0]), int(kps[pid][1])), color=(0, 0, 0), thickness=1)
+
+    return img
+
 # mano layer
 smplx_path = os.environ.get("SMPLX_PATH")
 mano_layer = {'right': smplx.create(smplx_path, 'mano', use_pca=False, is_rhand=True), 'left': smplx.create(smplx_path, 'mano', use_pca=False, is_rhand=False)}
@@ -44,12 +59,15 @@ cam_idx = '400030'
 save_path = osp.join(subset, split, capture_idx, seq_name, cam_idx)
 os.makedirs(save_path, exist_ok=True)
 
+skeleton = load_skeleton('../../data/InterHand2.6M/annotations/skeleton.txt', 42)
+
 with open(osp.join(annot_root_path, split, 'InterHand2.6M_' + split + '_MANO_NeuralAnnot.json')) as f:
     mano_params = json.load(f)
 with open(osp.join(annot_root_path, split, 'InterHand2.6M_' + split + '_camera.json')) as f:
     cam_params = json.load(f)
 with open(osp.join(annot_root_path, split, 'InterHand2.6M_' + split + '_joint_3d.json')) as f:
     joints = json.load(f)
+
 
 img_path_list = glob(osp.join(img_root_path, split, 'Capture' + capture_idx, seq_name, 'cam' + cam_idx, '*.jpg'))
 for img_path in img_path_list:
@@ -124,6 +142,7 @@ for img_path in img_path_list:
         light_pose[:3, 3] = np.array([1, 1, 2])
         scene.add(light, pose=light_pose)
 
+        img = vis_keypoints(img, joint_img, skeleton)
         # render
         #rgb, depth = renderer.render(scene, flags=pyrender.RenderFlags.RGBA)
         #rgb = rgb[:,:,:3].astype(np.float32)
