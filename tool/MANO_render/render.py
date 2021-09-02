@@ -21,7 +21,7 @@ def save_obj(v, f, file_name='output.obj'):
     obj_file.close()
     
 # mano layer
-smplx_path = 'SMPLX_PATH'
+smplx_path = os.environ.get("SMPLX_PATH")
 mano_layer = {'right': smplx.create(smplx_path, 'mano', use_pca=False, is_rhand=True), 'left': smplx.create(smplx_path, 'mano', use_pca=False, is_rhand=False)}
 
 # fix MANO shapedirs of the left hand bug (https://github.com/vchoutas/smplx/issues/48)
@@ -29,7 +29,7 @@ if torch.sum(torch.abs(mano_layer['left'].shapedirs[:,0,:] - mano_layer['right']
     print('Fix shapedirs bug of MANO')
     mano_layer['left'].shapedirs[:,0,:] *= -1
             
-root_path = '../../data/InterHand2.6M/'
+root_path = '/home/ubuntu/RawDatasets/InterHand/InterHand2.6M_5fps_batch1'
 img_root_path = osp.join(root_path, 'images')
 annot_root_path = osp.join(root_path, 'annotations')
 subset = 'all'
@@ -113,18 +113,18 @@ for img_path in img_path_list:
         scene.add(light, pose=light_pose)
 
         # render
-        rgb, depth = renderer.render(scene, flags=pyrender.RenderFlags.RGBA)
-        rgb = rgb[:,:,:3].astype(np.float32)
-        depth = depth[:,:,None]
-        valid_mask = (depth > 0)
-        if prev_depth is None:
-            render_mask = valid_mask
-            img = rgb * render_mask + img * (1 - render_mask)
-            prev_depth = depth
-        else:
-            render_mask = valid_mask * np.logical_or(depth < prev_depth, prev_depth==0)
-            img = rgb * render_mask + img * (1 - render_mask)
-            prev_depth = depth * render_mask + prev_depth * (1 - render_mask)
+        #rgb, depth = renderer.render(scene, flags=pyrender.RenderFlags.RGBA)
+        #rgb = rgb[:,:,:3].astype(np.float32)
+        #depth = depth[:,:,None]
+        #valid_mask = (depth > 0)
+        #if prev_depth is None:
+        #    render_mask = valid_mask
+        #    img = rgb * render_mask + img * (1 - render_mask)
+        #    prev_depth = depth
+        #else:
+        #    render_mask = valid_mask * np.logical_or(depth < prev_depth, prev_depth==0)
+        #    img = rgb * render_mask + img * (1 - render_mask)
+        #    prev_depth = depth * render_mask + prev_depth * (1 - render_mask)
 
     # save image
     cv2.imwrite(osp.join(save_path, img_path.split('/')[-1]), img)
