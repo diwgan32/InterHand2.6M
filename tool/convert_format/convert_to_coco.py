@@ -33,9 +33,14 @@ def get_center(gtIn, joint_valid):
 
     # Mask the left/right wrist when
     # computing center if its not valid
-    wrist_right *= joint_valid[orig_root_idx["right"]]
-    wrist_left *= joint_valid[orig_root_idx["left"]]
-    return np.average([wrist_left, wrist_right], axis=0)
+    
+    wrist_list = []
+    if (joint_valid[orig_root_idx['right']] == 1):
+        wrist_list.append(wrist_right)
+    if (joint_valid[orig_root_idx['left']] == 1):
+        wrist_list.append(wrist_left)
+
+    return np.average(wrist_list, axis=0)
 
 def make_dirs(path):
     try:
@@ -48,7 +53,6 @@ def crop_and_center(imgInOrg, gtIn, joint_valid):
     shape = imgInOrg.shape
     box_size = min(imgInOrg.shape[0], imgInOrg.shape[1])
     center = get_center(gtIn, joint_valid)
-    print(center, box_size)
     x_min_v = center[0] - box_size/2
     y_min_v = center[1] - box_size/2
     x_max_v = center[0] + box_size/2
@@ -71,21 +75,42 @@ def crop_and_center(imgInOrg, gtIn, joint_valid):
     new_img = cv2.resize(new_img, (256, 256))
     x_min_v *= float(256)/box_size
     y_min_v *= float(256)/box_size
-    return new_img, x_min_v, y_min_v
+    return new_img, x_min_v, y_min_v, float(256)/box_size
 
-def vis_keypoints(img, kps, skeleton):
-    for i in range(21):
+def vis_keypoints(img, kps, skeleton, joint_valid):
+    for i in range(42):
         joint_name = skeleton[i]['name']
         pid = skeleton[i]['parent_id']
         parent_joint_name = skeleton[pid]['name']
-        
+        if (pid == -1):
+            continue
+        if (not joint_valid[i] or not joint_valid[pid]):
+            continue
         kps_i = (kps[i][0].astype(np.int32), kps[i][1].astype(np.int32))
         kps_pid = (kps[pid][0].astype(np.int32), kps[pid][1].astype(np.int32))
         #print("Score", score[i], score[pid], pid)
-        img = cv2.line(img, (int(kps[i][0]), int(kps[i][1])), (int(kps[pid][0]), int(kps[pid][1])), color=(0, 0, 0), thickness=1)
+        img = cv2.line(img, (int(kps[i][0]), int(kps[i][1])), (int(kps[pid][0]), int(kps[pid][1])), color=(0, 255, 0), thickness=2)
 
     return img
-          
+
+def project_3D_points(cam_mat, pts3D, is_OpenGL_coords=True):
+    '''
+    Function for projecting 3d points to 2d
+    :param camMat: camera matrix
+    :param pts3D: 3D points
+    :param isOpenGLCoords: If True, hand/object along negative z-axis. If False hand/object along positive z-axis
+    :return:
+    '''
+    assert pts3D.shape[-1] == 3
+    assert len(pts3D.shape) == 2
+
+    proj_pts = pts3D.dot(cam_mat.T)
+    proj_pts = np.stack([proj_pts[:,0]/proj_pts[:,2], proj_pts[:,1]/proj_pts[:,2]],axis=1)
+
+    assert len(proj_pts.shape) == 2
+
+    return proj_pts
+
 root_path = '/home/ubuntu/RawDatasets/InterHand/InterHand2.6M_5fps_batch1'
 img_root_path = osp.join(root_path, 'images')
 annot_root_path = osp.join(root_path, 'annotations')
@@ -123,27 +148,29 @@ for aid in db.anns.keys():
     joint_cam = world2cam(joint_world.transpose(1,0), camrot, campos.reshape(3,1)).transpose(1,0)
     joint_2d = cam2pixel(joint_cam, focal, princpt)[:,:2]
         
-    img = cv2.imread(img_path)
 
     joint_valid = np.array(ann['joint_valid'],dtype=np.float32).reshape(joint_num*2)
     # if root is not valid -> root-relative 3D pose is also not valid. Therefore, mark all joints as invalid
     joint_valid[orig_joint_type['right']] *= joint_valid[orig_root_idx['right']]
     joint_valid[orig_joint_type['left']] *= joint_valid[orig_root_idx['left']]
-            
+    if (not (joint_valid[20] == 1 and joint_valid[41] == 1)):
+        continue
+    img = cv2.imread(img_path) 
+    processed_img, x_offset, y_offset, scale = crop_and_center(img, joint_2d, joint_valid)
 
-    processed_img, x_offset, y_offset = crop_and_center(img, joint_2d, joint_valid)
+    joint_2d *= scale
     joint_2d[:, 0] -= x_offset
     joint_2d[:, 1] -= y_offset
     
     output_path = img_path.replace("InterHand2.6M_5fps_batch1", "InterHand2.6M_5fps_batch1_output")
     make_dirs(output_path)
     
-    processed_img = vis_keypoints(vis_keypoints, joint_2d, skeleton)
-    cv2.imwrite(output_path, processed_img)
     K = np.array([[focal[0], 0, princpt[0]], [0, focal[1], princpt[1]], [0, 0, 1.0]])
     joint_3d = reproject_to_3d(joint_2d, K, joint_cam[:, 2])
 
-
+    joints_2d_proj = project_3D_points(K, joint_3d)
+    processed_img = vis_keypoints(processed_img, joints_2d_proj, skeleton, joint_valid)
+    cv2.imwrite(output_path, processed_img)
     # output["images"].append({
     #   "id": count,
     #   "width": 256,
@@ -167,5 +194,5 @@ for aid in db.anns.keys():
     #   "bbox": get_bbox(joint_2d)
     # })
 
-    print(f"{ann['joint_valid']}, {joint_valid}, {joint_3d}")
+    #print(f"{ann['joint_valid']}, {joint_valid}, {joint_3d}")
     input("? ")
