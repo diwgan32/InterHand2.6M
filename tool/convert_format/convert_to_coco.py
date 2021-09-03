@@ -91,7 +91,7 @@ def vis_keypoints(img, kps, skeleton, bbox, joint_valid):
         #print("Score", score[i], score[pid], pid)
         img = cv2.line(img, (int(kps[i][0]), int(kps[i][1])), (int(kps[pid][0]), int(kps[pid][1])), color=(0, 255, 0), thickness=2)
 
-    img = cv2.rectangle(img, (bbox[0], bbox[1]), (bbox[0] + bbox[2], bbox[1] + bbox[3]), (0, 0, 255), 2)
+    img = cv2.rectangle(img, (int(bbox[0]), int(bbox[1])), (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3])), (0, 0, 255), 2)
     return img
 
 def project_3D_points(cam_mat, pts3D, is_OpenGL_coords=True):
@@ -120,11 +120,11 @@ def get_bbox(uv, hand_type):
     elif (hand_type == "interacting"):
         s = slice(0, 41)
 
-    x = min(uv[s, 0]) - 10
-    y = min(uv[s, 1]) - 10
+    x = max(min(uv[s, 0]) - 10, 0)
+    y = max(min(uv[s, 1]) - 10, 0)
 
-    x_max = min(max(uv[s, 0]) + 10, 256)
-    y_max = min(max(uv[s, 1]) + 10, 256)
+    x_max = min(max(uv[s, 0]) + 10, 255)
+    y_max = min(max(uv[s, 1]) + 10, 255)
 
     # xmin, ymin, width, height
     return [
@@ -148,6 +148,7 @@ joint_num = 21
 orig_root_idx = {'right': 20, 'left': 41}
 orig_joint_type = {'right': np.arange(0,joint_num), 'left': np.arange(joint_num, joint_num*2)}
 
+num_items = len(db.anns.keys())
 print(f"Num {split}: {len(db.anns.keys())}")
 
 output = {
@@ -160,6 +161,7 @@ output = {
     }]
 }
 
+count = 0
 for aid in db.anns.keys():
     ann = db.anns[aid]
     image_id = ann['image_id']
@@ -183,8 +185,6 @@ for aid in db.anns.keys():
     # if root is not valid -> root-relative 3D pose is also not valid. Therefore, mark all joints as invalid
     joint_valid[orig_joint_type['right']] *= joint_valid[orig_root_idx['right']]
     joint_valid[orig_joint_type['left']] *= joint_valid[orig_root_idx['left']]
-    if (not (joint_valid[20] == 1 and joint_valid[41] == 1)):
-        continue
     img = cv2.imread(img_path) 
     processed_img, x_offset, y_offset, scale = crop_and_center(img, joint_2d, joint_valid)
 
@@ -218,12 +218,15 @@ for aid in db.anns.keys():
       "category_id": 1,
       "is_crowd": 0,
       "joint_img": joint_2d.tolist(),
-      "joint_valid": joint_valid,
+      "joint_valid": joint_valid.tolist(),
       "hand_type": ann['hand_type'],
       "joint_cam": (joint_3d).tolist(),
       "bbox": get_bbox(joint_2d, ann["hand_type"])
     })
-
+    count += 1
+    if (count % 100 == 0):
+        percent = 100 * (float(count)/num_items)
+        print("Idx: " + str(count) + ", percent: " + str(round(percent, 2)) + "%")
 f = open("interhand_"+split+".json", "w")
 json.dump(output, f)
 f.close()
