@@ -124,4 +124,5 @@ def vis_3d_keypoints(kps_3d, score, skeleton, filename, score_thr=0.4, line_widt
     #cv2.waitKey(0)
     
     fig.savefig(osp.join(cfg.vis_dir, filename), dpi=fig.dpi)
+    plt.close()
 
