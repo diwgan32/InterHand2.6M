@@ -13,54 +13,65 @@ from utils.preprocessing import load_skeleton
 from pycocotools.coco import COCO
 
 def reproject_to_3d(im_coords, K, z):
-  im_coords = np.stack([im_coords[:,0], im_coords[:,1]],axis=1)
-  im_coords = np.hstack((im_coords, np.ones((im_coords.shape[0],1))))
-  projected = np.dot(np.linalg.inv(K), im_coords.T).T
-  projected[:, 0] *= z
-  projected[:, 1] *= z
-  projected[:, 2] *= z
-  return projected
+    im_coords = np.stack([im_coords[:,0], im_coords[:,1]],axis=1)
+    im_coords = np.hstack((im_coords, np.ones((im_coords.shape[0],1))))
+    projected = np.dot(np.linalg.inv(K), im_coords.T).T
+    projected[:, 0] *= z
+    projected[:, 1] *= z
+    projected[:, 2] *= z
+    return projected
 
-def get_center(gtIn):
-  wrist_1 = gtIn[0, 0]
-  y = gtIn[0, 1]
-  return [x, y]
+def get_center(gtIn, joint_valid):
+    wrist_right = np.array([
+        gtIn[orig_root_idx["right"], 0],
+        gtIn[orig_root_idx["right"], 1]
+    ])
+    wrist_left = np.array([
+        gtIn[orig_root_idx["left"], 0],
+        gtIn[orig_root_idx["left"], 1]
+    ])
+
+    # Mask the left/right wrist when
+    # computing center if its not valid
+    wrist_right *= joint_valid[orig_root_idx["right"]]
+    wrist_left *= joint_valid[orig_root_idx["left"]]
+    return np.average([wrist_left, wrist_right], axis=0)
 
 def make_dirs(path):
-  try:
-    base = os.path.dirname(path)
-    os.makedirs(base)
-  except Exception as e:
-    pass
+    try:
+        base = os.path.dirname(path)
+        os.makedirs(base)
+    except Exception as e:
+        pass
 
-def crop_and_center(imgInOrg, gtIn):
-  shape = imgInOrg.shape
-  box_size = min(imgInOrg.shape[0], imgInOrg.shape[1])
-  center = get_center(gtIn)
-  print(center, box_size)
-  x_min_v = center[0] - box_size/2
-  y_min_v = center[1] - box_size/2
-  x_max_v = center[0] + box_size/2
-  y_max_v = center[1] + box_size/2
-  
-  x_min_n = int(max(0, -x_min_v))
-  y_min_n = int(max(0, -y_min_v))
+def crop_and_center(imgInOrg, gtIn, joint_valid):
+    shape = imgInOrg.shape
+    box_size = min(imgInOrg.shape[0], imgInOrg.shape[1])
+    center = get_center(gtIn, joint_valid)
+    print(center, box_size)
+    x_min_v = center[0] - box_size/2
+    y_min_v = center[1] - box_size/2
+    x_max_v = center[0] + box_size/2
+    y_max_v = center[1] + box_size/2
 
-  x_min_o = int(max(0, x_min_v))
-  y_min_o = int(max(0, y_min_v))
-  x_max_o = int(min(imgInOrg.shape[1], x_max_v))
-  y_max_o = int(min(imgInOrg.shape[0], y_max_v))
+    x_min_n = int(max(0, -x_min_v))
+    y_min_n = int(max(0, -y_min_v))
 
-  w = int(x_max_o - x_min_o)
-  h = int(y_max_o - y_min_o)
-  
-  new_img = np.zeros((box_size, box_size, 3))
-  new_img[y_min_n:y_min_n+h, x_min_n:x_min_n+w] = \
+    x_min_o = int(max(0, x_min_v))
+    y_min_o = int(max(0, y_min_v))
+    x_max_o = int(min(imgInOrg.shape[1], x_max_v))
+    y_max_o = int(min(imgInOrg.shape[0], y_max_v))
+
+    w = int(x_max_o - x_min_o)
+    h = int(y_max_o - y_min_o)
+
+    new_img = np.zeros((box_size, box_size, 3))
+    new_img[y_min_n:y_min_n+h, x_min_n:x_min_n+w] = \
           imgInOrg[y_min_o:y_max_o, x_min_o:x_max_o]
-  new_img = cv2.resize(new_img, (256, 256))
-  x_min_v *= float(256)/480
-  y_min_v *= float(256)/480
-  return new_img, x_min_v, y_min_v
+    new_img = cv2.resize(new_img, (256, 256))
+    x_min_v *= float(256)/box_size
+    y_min_v *= float(256)/box_size
+    return new_img, x_min_v, y_min_v
 
 def vis_keypoints(img, kps, skeleton):
     for i in range(21):
@@ -104,7 +115,7 @@ for aid in db.anns.keys():
     frame_idx = img['frame_idx']
 
     img_path = osp.join(img_root_path, split, img['file_name'])
-    joint_param = joints[capture_idx][frame_idx]
+    joint_param = joints[str(capture_idx)][str(frame_idx)]
     campos, camrot = np.array(cam_params[str(capture_idx)]['campos'][str(cam_idx)], dtype=np.float32), np.array(cam_params[str(capture_idx)]['camrot'][str(cam_idx)], dtype=np.float32)
     focal, princpt = np.array(cam_params[str(capture_idx)]['focal'][str(cam_idx)], dtype=np.float32), np.array(cam_params[str(capture_idx)]['princpt'][str(cam_idx)], dtype=np.float32)
 
@@ -112,24 +123,23 @@ for aid in db.anns.keys():
     joint_cam = world2cam(joint_world.transpose(1,0), camrot, campos.reshape(3,1)).transpose(1,0)
     joint_2d = cam2pixel(joint_cam, focal, princpt)[:,:2]
         
-    img = cv2.imread(img_path)
+    img = cv2.imread(img_path)gi
 
-    joint_valid = np.array(ann['joint_valid'],dtype=np.float32).reshape(self.joint_num*2)
+    joint_valid = np.array(ann['joint_valid'],dtype=np.float32).reshape(joint_num*2)
     # if root is not valid -> root-relative 3D pose is also not valid. Therefore, mark all joints as invalid
     joint_valid[orig_joint_type['right']] *= joint_valid[orig_root_idx['right']]
     joint_valid[orig_joint_type['left']] *= joint_valid[orig_root_idx['left']]
             
 
-    # processed_img, x_offset, y_offset = crop_and_center(img, joint_2d)
-    # joint_2d[:, 0] -= x_offset
-    # joint_2d[:, 1] -= y_offset
+    processed_img, x_offset, y_offset = crop_and_center(img, joint_2d)
+    joint_2d[:, 0] -= x_offset
+    joint_2d[:, 1] -= y_offset
     # output_path = sample["color_file"].replace("DexYCB", "DexYCBOutput")
     # make_dirs(output_path)
     # cv2.imwrite(output_path, processed_img)
-    # K = np.array([[focal[0], 0, princpt[0]], [0, focal[1], princpt[1]], [0, 0, 1.0]])
-    # joint_3d = reproject_to_3d(joint_2d, K, joint_cam[:, 2])
+    K = np.array([[focal[0], 0, princpt[0]], [0, focal[1], princpt[1]], [0, 0, 1.0]])
+    joint_3d = reproject_to_3d(joint_2d, K, joint_cam[:, 2])
 
-    # joint_2d_aug, joint_3d_aug, joint_valid = left_or_right(joint_2d, joint_3d, sample["mano_side"])
 
     # output["images"].append({
     #   "id": count,
@@ -154,5 +164,5 @@ for aid in db.anns.keys():
     #   "bbox": get_bbox(joint_2d)
     # })
 
-    print(f"{ann['joint_valid']}, {joint_valid}, {joint_cam}")
+    print(f"{ann['joint_valid']}, {joint_valid}, {joint_3d}")
     input("? ")
