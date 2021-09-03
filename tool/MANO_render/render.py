@@ -13,6 +13,7 @@ import smplx
 import torch
 import sys
 sys.path.insert(0, osp.join('../../', 'common'))
+sys.path.insert(0, osp.join('../../', 'main'))
 from utils.transforms import world2cam, cam2pixel, pixel2cam
 from utils.preprocessing import load_skeleton
 
@@ -26,14 +27,14 @@ def save_obj(v, f, file_name='output.obj'):
     obj_file.close()
 
 def vis_keypoints(img, kps, skeleton):
-    for i in range(21):
+    for i in range(42):
         joint_name = skeleton[i]['name']
         pid = skeleton[i]['parent_id']
         parent_joint_name = skeleton[pid]['name']
-        
+        if (pid == -1):
+            continue
         kps_i = (kps[i][0].astype(np.int32), kps[i][1].astype(np.int32))
         kps_pid = (kps[pid][0].astype(np.int32), kps[pid][1].astype(np.int32))
-        #print("Score", score[i], score[pid], pid)
         img = cv2.line(img, (int(kps[i][0]), int(kps[i][1])), (int(kps[pid][0]), int(kps[pid][1])), color=(0, 0, 0), thickness=1)
 
     return img
