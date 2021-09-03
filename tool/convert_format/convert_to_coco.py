@@ -134,9 +134,12 @@ for aid in db.anns.keys():
     processed_img, x_offset, y_offset = crop_and_center(img, joint_2d, joint_valid)
     joint_2d[:, 0] -= x_offset
     joint_2d[:, 1] -= y_offset
-    # output_path = sample["color_file"].replace("DexYCB", "DexYCBOutput")
-    # make_dirs(output_path)
-    # cv2.imwrite(output_path, processed_img)
+    
+    output_path = img_path.replace("InterHand2.6M_5fps_batch1", "InterHand2.6M_5fps_batch1_output")
+    make_dirs(output_path)
+    
+    processed_img = vis_keypoints(vis_keypoints, joint_2d, skeleton)
+    cv2.imwrite(output_path, processed_img)
     K = np.array([[focal[0], 0, princpt[0]], [0, focal[1], princpt[1]], [0, 0, 1.0]])
     joint_3d = reproject_to_3d(joint_2d, K, joint_cam[:, 2])
 
