@@ -185,6 +185,10 @@ for aid in db.anns.keys():
     # if root is not valid -> root-relative 3D pose is also not valid. Therefore, mark all joints as invalid
     joint_valid[orig_joint_type['right']] *= joint_valid[orig_root_idx['right']]
     joint_valid[orig_joint_type['left']] *= joint_valid[orig_root_idx['left']]
+
+    if (joint_valid[orig_root_idx['right']] == 0 and joint_valid[orig_root_idx["left"]] == 0):
+        print("Both invalid..skipping")
+        continue
     img = cv2.imread(img_path) 
     processed_img, x_offset, y_offset, scale = crop_and_center(img, joint_2d, joint_valid)
 
