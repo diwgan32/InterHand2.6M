@@ -77,7 +77,7 @@ def crop_and_center(imgInOrg, gtIn, joint_valid):
     y_min_v *= float(256)/box_size
     return new_img, x_min_v, y_min_v, float(256)/box_size
 
-def vis_keypoints(img, kps, skeleton, joint_valid):
+def vis_keypoints(img, kps, skeleton, bbox, joint_valid):
     for i in range(42):
         joint_name = skeleton[i]['name']
         pid = skeleton[i]['parent_id']
@@ -91,6 +91,7 @@ def vis_keypoints(img, kps, skeleton, joint_valid):
         #print("Score", score[i], score[pid], pid)
         img = cv2.line(img, (int(kps[i][0]), int(kps[i][1])), (int(kps[pid][0]), int(kps[pid][1])), color=(0, 255, 0), thickness=2)
 
+    img = cv2.rectangle(img, (bbox[0], bbox[1]), (bbox[0] + bbox[2], bbox[1] + bbox[3]), (0, 0, 255), 2)
     return img
 
 def project_3D_points(cam_mat, pts3D, is_OpenGL_coords=True):
@@ -111,6 +112,25 @@ def project_3D_points(cam_mat, pts3D, is_OpenGL_coords=True):
 
     return proj_pts
 
+def get_bbox(uv, hand_type):
+    if (hand_type == "right"):
+        s = slice(0, orig_root_idx["right"])
+    elif (hand_type == "left"):
+        s = slice(0, orig_root_idx["left"])
+    elif (hand_type == "interacting"):
+        s = slice(0, 41)
+
+    x = min(uv[s, 0]) - 10
+    y = min(uv[s, 1]) - 10
+
+    x_max = min(max(uv[s, 0]) + 10, 256)
+    y_max = min(max(uv[s, 1]) + 10, 256)
+
+    # xmin, ymin, width, height
+    return [
+        float(max(0, x)), float(max(0, y)), float(x_max - x), float(y_max - y)
+    ]
+
 root_path = '/home/ubuntu/RawDatasets/InterHand/InterHand2.6M_5fps_batch1'
 img_root_path = osp.join(root_path, 'images')
 annot_root_path = osp.join(root_path, 'annotations')
@@ -129,6 +149,16 @@ orig_root_idx = {'right': 20, 'left': 41}
 orig_joint_type = {'right': np.arange(0,joint_num), 'left': np.arange(joint_num, joint_num*2)}
 
 print(f"Num {split}: {len(db.anns.keys())}")
+
+output = {
+    "images": [],
+    "annotations": [],
+    "categories": [{
+      'supercategory': 'person',
+      'id': 1,
+      'name': 'person'
+    }]
+}
 
 for aid in db.anns.keys():
     ann = db.anns[aid]
@@ -169,30 +199,32 @@ for aid in db.anns.keys():
     joint_3d = reproject_to_3d(joint_2d, K, joint_cam[:, 2])
 
     joints_2d_proj = project_3D_points(K, joint_3d)
-    processed_img = vis_keypoints(processed_img, joints_2d_proj, skeleton, joint_valid)
+    processed_img = vis_keypoints(processed_img, joints_2d_proj, skeleton, get_bbox(joint_2d, ann["hand_type"]), joint_valid)
     cv2.imwrite(output_path, processed_img)
-    # output["images"].append({
-    #   "id": count,
-    #   "width": 256,
-    #   "height": 256,
-    #   "file_name": output_path,
-    #   "camera_param": {
-    #       "focal": [float(K[0][0]), float(K[1][1])],
-    #       "princpt": [float(K[0][2]), float(K[1][2])]
-    #   }
-    # })
+    output["images"].append({
+      "id": count,
+      "width": 256,
+      "height": 256,
+      "file_name": output_path,
+      "camera_param": {
+          "focal": [float(K[0][0]), float(K[1][1])],
+          "princpt": [float(K[0][2]), float(K[1][2])]
+      }
+    })
 
-    # output["annotations"].append({
-    #   "id": count,
-    #   "image_id": count,
-    #   "category_id": 1,
-    #   "is_crowd": 0,
-    #   "joint_img": joint_2d_aug.tolist(),
-    #   "joint_valid": joint_valid,
-    #   "hand_type": sample["mano_side"],
-    #   "joint_cam": (joint_3d_aug * 1000).tolist(),
-    #   "bbox": get_bbox(joint_2d)
-    # })
+    output["annotations"].append({
+      "id": count,
+      "image_id": count,
+      "category_id": 1,
+      "is_crowd": 0,
+      "joint_img": joint_2d.tolist(),
+      "joint_valid": joint_valid,
+      "hand_type": ann['hand_type'],
+      "joint_cam": (joint_3d).tolist(),
+      "bbox": get_bbox(joint_2d, ann["hand_type"])
+    })
 
-    #print(f"{ann['joint_valid']}, {joint_valid}, {joint_3d}")
-    input("? ")
+f = open("interhand_"+split+".json", "w")
+json.dump(output, f)
+f.close()
+
