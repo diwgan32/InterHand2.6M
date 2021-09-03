@@ -123,7 +123,7 @@ for aid in db.anns.keys():
     joint_cam = world2cam(joint_world.transpose(1,0), camrot, campos.reshape(3,1)).transpose(1,0)
     joint_2d = cam2pixel(joint_cam, focal, princpt)[:,:2]
         
-    img = cv2.imread(img_path)gi
+    img = cv2.imread(img_path)
 
     joint_valid = np.array(ann['joint_valid'],dtype=np.float32).reshape(joint_num*2)
     # if root is not valid -> root-relative 3D pose is also not valid. Therefore, mark all joints as invalid
@@ -131,7 +131,7 @@ for aid in db.anns.keys():
     joint_valid[orig_joint_type['left']] *= joint_valid[orig_root_idx['left']]
             
 
-    processed_img, x_offset, y_offset = crop_and_center(img, joint_2d)
+    processed_img, x_offset, y_offset = crop_and_center(img, joint_2d, joint_valid)
     joint_2d[:, 0] -= x_offset
     joint_2d[:, 1] -= y_offset
     # output_path = sample["color_file"].replace("DexYCB", "DexYCBOutput")
