@@ -7,6 +7,7 @@ import os.path as osp
 import trimesh
 import sys
 sys.path.insert(0, osp.join('../../', 'common'))
+sys.path.insert(0, osp.join('../../', 'main'))
 from utils.transforms import world2cam, cam2pixel, pixel2cam
 from utils.preprocessing import load_skeleton
 from pycocotools.coco import COCO
@@ -43,6 +44,7 @@ print(f"Num {split}: {len(db.anns.keys())}")
 for aid in db.anns.keys():
     ann = db.anns[aid]
     image_id = ann['image_id']
+    img = db.loadImgs(image_id)[0]
     capture_id = img['capture']
     seq_name = img['seq_name']
     cam = img['camera']
