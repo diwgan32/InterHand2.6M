@@ -131,6 +131,9 @@ def get_bbox(uv, hand_type):
         float(max(0, x)), float(max(0, y)), float(x_max - x), float(y_max - y)
     ]
 
+
+
+
 root_path = '/home/ubuntu/RawDatasets/InterHand/InterHand2.6M_5fps_batch1'
 img_root_path = osp.join(root_path, 'images')
 annot_root_path = osp.join(root_path, 'annotations')
@@ -180,15 +183,22 @@ for aid in db.anns.keys():
     joint_cam = world2cam(joint_world.transpose(1,0), camrot, campos.reshape(3,1)).transpose(1,0)
     joint_2d = cam2pixel(joint_cam, focal, princpt)[:,:2]
         
-
     joint_valid = np.array(ann['joint_valid'],dtype=np.float32).reshape(joint_num*2)
     # if root is not valid -> root-relative 3D pose is also not valid. Therefore, mark all joints as invalid
     joint_valid[orig_joint_type['right']] *= joint_valid[orig_root_idx['right']]
     joint_valid[orig_joint_type['left']] *= joint_valid[orig_root_idx['left']]
-
+    
     if (joint_valid[orig_root_idx['right']] == 0 and joint_valid[orig_root_idx["left"]] == 0):
+        count += 1
         print("Both invalid..skipping")
         continue
+
+    center = get_center(joint_2d, joint_valid)
+    if (center[0] < 0 or center[1] < 0 or center[0] >= img['width'] or center[1] >= img['height']):
+        count += 1
+        print("Skipping because wrist off center")
+        continue
+
     img = cv2.imread(img_path) 
     processed_img, x_offset, y_offset, scale = crop_and_center(img, joint_2d, joint_valid)
 
@@ -203,13 +213,13 @@ for aid in db.anns.keys():
     joint_3d = reproject_to_3d(joint_2d, K, joint_cam[:, 2])
 
     joints_2d_proj = project_3D_points(K, joint_3d)
-    processed_img = vis_keypoints(processed_img, joints_2d_proj, skeleton, get_bbox(joint_2d, ann["hand_type"]), joint_valid)
+    # processed_img = vis_keypoints(processed_img, joints_2d_proj, skeleton, get_bbox(joint_2d, ann["hand_type"]), joint_valid)
     cv2.imwrite(output_path, processed_img)
     output["images"].append({
       "id": count,
       "width": 256,
       "height": 256,
-      "file_name": output_path,
+      "file_name": output_path.replace("RawDatasets", "ProcessedDatasets"),
       "camera_param": {
           "focal": [float(K[0][0]), float(K[1][1])],
           "princpt": [float(K[0][2]), float(K[1][2])]
