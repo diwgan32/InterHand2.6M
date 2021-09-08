@@ -218,7 +218,7 @@ if __name__ == "__main__":
     transform = transforms.ToTensor()
     model = load_model(args)
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    hand_joints = np.array((frame_count, 42, 3))
+    hand_joints = np.zeros((frame_count, 42, 3))
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -297,8 +297,8 @@ if __name__ == "__main__":
         joint_coord[:,1] = joint_coord[:,1] / cfg.output_hm_shape[1] * cfg.input_img_shape[0]
         joint_coord[:,:2] = np.dot(inv_trans, np.concatenate((joint_coord[:,:2], np.ones_like(joint_coord[:,:1])),1).transpose(1,0)).transpose(1,0)
         joint_coord[:,2] = (joint_coord[:,2]/cfg.output_hm_shape[0] * 2 - 1) * (cfg.bbox_3d_size/2)
-
-        hand_joints = joint_coord
+        print(hand_joints[frame_no].shape)
+        hand_joints[frame_no] = joint_coord
 
         # restore right hand-relative left hand depth to continuous depth space
         #rel_root_depth = (rel_root_depth/cfg.output_root_hm_shape * 2 - 1) * (cfg.bbox_3d_size_root/2)
@@ -323,6 +323,7 @@ if __name__ == "__main__":
         vis_img = vis_keypoints(vis_img, joint_coord, joint_valid, skeleton, filename, save_path=None, bbox=bbox)
         cv2_img = np.array(vis_img.convert("RGB"))
         writer.write(cv2_img[:, :, ::-1])
+#        vis_3d_keypoints(joint_coord, joint_valid, skeleton, f"result_3d_{frame_no}.jpg")
 
         frame_no += 1
     if (args.save_joints):
