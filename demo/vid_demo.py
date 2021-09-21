@@ -117,10 +117,10 @@ def get_small_hand_bbox(wrnch_data, frame_no, side="left"):
     y_max = np.max(y_vals[y_vals > 0])
 
     return {
-        "minX": max(x_min - .03, 0),
-        "minY": max(y_min - .03, 0),
-        "height": min(y_max - y_min + .06, 1.0),
-        "width": min(x_max - x_min  + .06, 1.0)
+        "minX": max(x_min - .01, 0),
+        "minY": max(y_min - .01, 0),
+        "height": min(y_max - y_min + .02, 1.0),
+        "width": min(x_max - x_min  + .02, 1.0)
     }
 
 def get_wrist_pos(wrnch_data, frame_no, side="L"):
@@ -227,6 +227,8 @@ if __name__ == "__main__":
         #if is_portrait:
         #    frame = cv2.transpose(frame, frame)
         #    frame = cv2.flip(frame, 1)
+        if (frame_no >= len(wrnch_data["frames"])):
+            break
         cropped_img, x_offset, y_offset, scale = get_cropped_image(frame, wrnch_data, frame_no, SIDE)
         if (frame_no % 10 == 0):
             print(f"Frame no: {frame_no}")
@@ -297,8 +299,6 @@ if __name__ == "__main__":
         joint_coord[:,1] = joint_coord[:,1] / cfg.output_hm_shape[1] * cfg.input_img_shape[0]
         joint_coord[:,:2] = np.dot(inv_trans, np.concatenate((joint_coord[:,:2], np.ones_like(joint_coord[:,:1])),1).transpose(1,0)).transpose(1,0)
         joint_coord[:,2] = (joint_coord[:,2]/cfg.output_hm_shape[0] * 2 - 1) * (cfg.bbox_3d_size/2)
-        print(hand_joints[frame_no].shape)
-        hand_joints[frame_no] = joint_coord
 
         # restore right hand-relative left hand depth to continuous depth space
         #rel_root_depth = (rel_root_depth/cfg.output_root_hm_shape * 2 - 1) * (cfg.bbox_3d_size_root/2)
@@ -309,11 +309,11 @@ if __name__ == "__main__":
         # handedness
         joint_valid = np.zeros((NUM_INTERHAND_JOINTS*2), dtype=np.float32)
         right_exist = False
-        if hand_type[0] > 0.5: 
+        if hand_type[0] > 0.85: 
             right_exist = True
             joint_valid[JOINT_TYPE['right']] = 1
         left_exist = False
-        if hand_type[1] > 0.5:
+        if hand_type[1] > 0.85:
             left_exist = True
             joint_valid[JOINT_TYPE['left']] = 1
 
@@ -322,6 +322,13 @@ if __name__ == "__main__":
         vis_img = original_img.copy()[:,:,::-1].transpose(2,0,1)
         vis_img = vis_keypoints(vis_img, joint_coord, joint_valid, skeleton, filename, save_path=None, bbox=bbox)
         cv2_img = np.array(vis_img.convert("RGB"))
+       
+        hand_joints[frame_no] = np.zeros_like(joint_coord)
+        if (right_exist):
+            hand_joints[frame_no][0:21] = joint_coord[0:21]
+        if (left_exist):
+            hand_joints[frame_no][21:42] = joint_coord[21:42]
+      
         writer.write(cv2_img[:, :, ::-1])
 #        vis_3d_keypoints(joint_coord, joint_valid, skeleton, f"result_3d_{frame_no}.jpg")
 
