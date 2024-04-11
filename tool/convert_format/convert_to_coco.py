@@ -152,6 +152,9 @@ orig_root_idx = {'right': 20, 'left': 41}
 orig_joint_type = {'right': np.arange(0,joint_num), 'left': np.arange(joint_num, joint_num*2)}
 
 num_items = len(db.anns.keys())
+NEW_SKELETON_IDS = [20, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, \
+41, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
+
 print(f"Num {split}: {len(db.anns.keys())}")
 
 output = {
@@ -225,16 +228,17 @@ for aid in db.anns.keys():
           "princpt": [float(K[0][2]), float(K[1][2])]
       }
     })
-
+    print(joint_2d[NEW_SKELETON_IDS])
+    input("? ")
     output["annotations"].append({
       "id": count,
       "image_id": count,
       "category_id": 1,
       "is_crowd": 0,
-      "joint_img": joint_2d.tolist(),
-      "joint_valid": joint_valid.tolist(),
+      "joint_img": joint_2d[NEW_SKELETON_IDS].tolist(),
+      "joint_valid": joint_valid[NEW_SKELETON_IDS].tolist(),
       "hand_type": ann['hand_type'],
-      "joint_cam": (joint_3d).tolist(),
+      "joint_cam": (joint_3d[NEW_SKELETON_IDS]).tolist(),
       "bbox": get_bbox(joint_2d, ann["hand_type"])
     })
     count += 1

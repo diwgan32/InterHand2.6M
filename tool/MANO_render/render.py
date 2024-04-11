@@ -131,17 +131,17 @@ for img_path in img_path_list:
         scene.add(camera)
         
         # renderer
-        renderer = pyrender.OffscreenRenderer(viewport_width=img_width, viewport_height=img_height, point_size=1.0)
+        #renderer = pyrender.OffscreenRenderer(viewport_width=img_width, viewport_height=img_height, point_size=1.0)
        
         # light
-        light = pyrender.DirectionalLight(color=[1.0, 1.0, 1.0], intensity=0.8)
-        light_pose = np.eye(4)
-        light_pose[:3, 3] = np.array([0, -1, 1])
-        scene.add(light, pose=light_pose)
-        light_pose[:3, 3] = np.array([0, 1, 1])
-        scene.add(light, pose=light_pose)
-        light_pose[:3, 3] = np.array([1, 1, 2])
-        scene.add(light, pose=light_pose)
+        #light = pyrender.DirectionalLight(color=[1.0, 1.0, 1.0], intensity=0.8)
+        #light_pose = np.eye(4)
+        #light_pose[:3, 3] = np.array([0, -1, 1])
+        #scene.add(light, pose=light_pose)
+        #light_pose[:3, 3] = np.array([0, 1, 1])
+        #scene.add(light, pose=light_pose)
+        #light_pose[:3, 3] = np.array([1, 1, 2])
+        #scene.add(light, pose=light_pose)
 
         img = vis_keypoints(img, joint_img, skeleton)
         # render
