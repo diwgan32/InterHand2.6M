@@ -7,3 +7,8 @@ output/
 data/InterHand2.6M/annotations/
 
 *.DS_Store
+
+*.mp4
+*.npy
+
+tool/MANO_render/all/

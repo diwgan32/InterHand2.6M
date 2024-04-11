@@ -14,7 +14,7 @@ import numpy as np
 class Config:
     
     ## dataset
-    dataset = 'HanCoMerged' # InterHand2.6M, RHD, STB
+    dataset = 'Interhand_Hanco_Dex_HO3D' # InterHand2.6M, RHD, STB
 
     ## input, output
     input_img_shape = (256, 256)
@@ -32,10 +32,10 @@ class Config:
     end_epoch = 20 if dataset == 'InterHand2.6M' else 50
     lr = 1e-4
     lr_dec_factor = 10
-    train_batch_size = 16 
+    train_batch_size = 24
 
     ## testing config
-    test_batch_size = 4
+    test_batch_size = 16
     trans_test = 'rootnet' # gt, rootnet
 
     ## directory
